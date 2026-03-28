@@ -1,0 +1,2852 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Stack">
+<meta name="theme-color" content="#1a1814">
+<title>Stack</title>
+<link rel="manifest" href="manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Instrument+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #1a1814;
+  --surface: #222018;
+  --surface2: #2c2a20;
+  --surface3: #363428;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.13);
+  --text: #ede9dc;
+  --text2: #9e9880;
+  --text3: #5e5648;
+  --cream: #ede9dc;
+  --green: #7ab87a;
+  --green-bg: #1e3a1e;
+  --green-border: rgba(122,184,122,0.3);
+  --gold: #d4a84b;
+  --gold-bg: #382c0e;
+  --gold-border: rgba(212,168,75,0.3);
+  --purple: #9b7fd4;
+  --purple-bg: #261a42;
+  --purple-border: rgba(155,127,212,0.3);
+  --blue: #6a9bd4;
+  --blue-bg: #0e1e36;
+  --blue-border: rgba(106,155,212,0.3);
+  --pink: #d47a9b;
+  --pink-bg: #381228;
+  --pink-border: rgba(212,122,155,0.3);
+  --orange: #d4956a;
+  --orange-bg: #382010;
+  --orange-border: rgba(212,149,106,0.3);
+  --red: #d46a6a;
+  --red-bg: #3a1212;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
+  --shadow: 0 4px 16px rgba(0,0,0,0.4);
+  --radius: 14px;
+  --radius-sm: 8px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-top: env(safe-area-inset-top, 0px);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+  font-family: 'Instrument Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+/* Grain */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 999;
+  opacity: 0.02;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  max-width: 430px;
+  margin: 0 auto;
+  position: relative;
+}
+
+/* SCREENS */
+.screen {
+  display: none;
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-bottom: calc(80px + var(--safe-bottom));
+  padding-top: var(--safe-top);
+  -webkit-overflow-scrolling: touch;
+}
+.screen.active { display: block; }
+
+/* NAV BAR */
+.nav {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 430px;
+  background: rgba(20,18,14,0.96);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-top: 0.5px solid var(--border2);
+  padding: 8px 0 calc(8px + var(--safe-bottom));
+  display: flex;
+  z-index: 100;
+}
+
+.nav-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px 4px;
+  color: var(--text3);
+  transition: color 0.15s;
+}
+
+.nav-btn.active { color: var(--gold); }
+
+.nav-icon {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-icon svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+
+.nav-label {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+/* HEADER */
+.page-header {
+  padding: 20px 20px 0;
+}
+
+.page-eyebrow {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 4px;
+}
+
+.page-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 28px;
+  font-weight: 900;
+  color: var(--text);
+  line-height: 1.1;
+}
+
+.page-title em { font-style: italic; }
+
+/* CARDS */
+.card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  border: 0.5px solid var(--border2);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.card-section {
+  margin: 16px 20px 0;
+}
+
+/* DAY TYPE PILL */
+.day-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.day-pill.dose { background: var(--green-bg); color: var(--green); border: 0.5px solid var(--green-border); }
+.day-pill.transition { background: var(--gold-bg); color: var(--gold); border: 0.5px solid var(--gold-border); }
+.day-pill.rest { background: var(--surface2); color: var(--text2); border: 0.5px solid var(--border2); }
+.day-pill.break { background: var(--pink-bg); color: var(--pink); border: 0.5px solid var(--pink-border); }
+.day-pill.notset { background: var(--surface2); color: var(--text3); border: 0.5px solid var(--border); }
+
+/* SUPPLEMENT ITEMS */
+.supp-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 0.5px solid var(--border);
+  cursor: pointer;
+  transition: background 0.1s;
+  user-select: none;
+}
+
+.supp-item:last-child { border-bottom: none; }
+.supp-item:active { background: var(--surface2); }
+
+.supp-check {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border2);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+
+.supp-check.checked {
+  background: var(--green);
+  border-color: var(--green);
+}
+
+.supp-check.checked svg { display: block; }
+.supp-check svg { display: none; width: 13px; height: 13px; stroke: var(--bg); stroke-width: 2.5; fill: none; }
+
+.supp-info { flex: 1; min-width: 0; }
+
+.supp-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.supp-detail {
+  font-size: 12px;
+  color: var(--text2);
+  margin-top: 1px;
+}
+
+.supp-dose {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--text3);
+  flex-shrink: 0;
+}
+
+.supp-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* SECTION HEADERS */
+.section-head {
+  padding: 16px 16px 8px;
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text3);
+  border-bottom: 0.5px solid var(--border);
+}
+
+/* TAGS */
+.tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+.tag-core { background: var(--gold-bg); color: var(--gold); }
+.tag-lever { background: var(--orange-bg); color: var(--orange); }
+.tag-bp { background: var(--purple-bg); color: var(--purple); }
+.tag-micro { background: var(--green-bg); color: var(--green); }
+.tag-sit { background: var(--blue-bg); color: var(--blue); }
+
+/* PROGRESS BAR */
+.progress-wrap {
+  height: 4px;
+  background: var(--surface2);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: var(--text);
+  transition: width 0.3s ease;
+}
+
+/* BUTTONS */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 18px;
+  border-radius: var(--radius-sm);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: all 0.15s;
+}
+
+.btn:active { transform: scale(0.97); }
+
+.btn-primary {
+  background: var(--text);
+  color: var(--bg);
+}
+
+.btn-secondary {
+  background: var(--surface2);
+  color: var(--text);
+  border: 0.5px solid var(--border2);
+}
+
+.btn-green {
+  background: var(--green-bg);
+  color: var(--green);
+  border: 0.5px solid var(--green-border);
+}
+
+.btn-block { width: 100%; }
+
+/* INPUTS */
+input[type="text"], input[type="number"], input[type="date"], textarea, select {
+  background: var(--surface2);
+  border: 0.5px solid var(--border2);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  color: var(--cream, var(--text));
+  width: 100%;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  color-scheme: dark;
+}
+
+input:focus, textarea:focus, select:focus {
+  border-color: var(--text);
+  background: var(--surface);
+}
+
+/* MODAL */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  backdrop-filter: blur(4px);
+  z-index: 200;
+  display: none;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.modal-overlay.open { display: flex; }
+
+.modal {
+  background: var(--surface);
+  border-radius: var(--radius) var(--radius) 0 0;
+  border: 0.5px solid var(--border2);
+  border-bottom: none;
+  width: 100%;
+  max-width: 430px;
+  max-height: 85vh;
+  overflow-y: auto;
+  padding: 0 0 calc(20px + var(--safe-bottom));
+  animation: slideUp 0.25s ease;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.modal-handle {
+  width: 36px;
+  height: 4px;
+  background: var(--border2);
+  border-radius: 2px;
+  margin: 12px auto 0;
+}
+
+.modal-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 20px;
+  font-weight: 700;
+  padding: 16px 20px 0;
+  color: var(--text);
+}
+
+.modal-body { padding: 16px 20px 0; }
+
+/* THREE DAY STRIP */
+.day-strip {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr 1fr;
+  gap: 8px;
+  margin: 16px 20px 0;
+}
+
+.day-card {
+  background: var(--surface);
+  border: 0.5px solid var(--border2);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  text-align: center;
+}
+
+.day-card.today {
+  background: var(--gold-bg);
+  border-color: var(--gold-border);
+}
+
+.day-card-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 4px;
+}
+
+.day-card.today .day-card-label { color: rgba(212,168,75,0.6); }
+
+.day-card-date {
+  font-family: 'Playfair Display', serif;
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--text);
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.day-card.today .day-card-date { color: var(--gold); }
+
+.day-card-type {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* STAT ROWS */
+.stat-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 0.5px solid var(--border);
+}
+
+.stat-row:last-child { border-bottom: none; }
+
+.stat-label {
+  font-size: 13px;
+  color: var(--text2);
+}
+
+.stat-val {
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+/* GOING OUT SCREEN */
+.go-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 0.5px solid var(--border);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.go-item:last-child { border-bottom: none; }
+.go-item:active { background: var(--surface2); }
+
+.go-check {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border2);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+
+.go-check.checked { background: var(--green); border-color: var(--green); }
+.go-check.checked svg { display: block; }
+.go-check svg { display: none; width: 14px; height: 14px; stroke: white; stroke-width: 2.5; fill: none; }
+
+/* SYMPTOM LOG */
+.symptom-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.symptom-btn {
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  border: 0.5px solid var(--border2);
+  background: var(--surface2);
+  font-size: 13px;
+  color: var(--text2);
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s;
+}
+
+.symptom-btn.active {
+  background: var(--text);
+  color: var(--bg);
+  border-color: var(--text);
+}
+
+/* MOOD SELECTOR */
+.mood-row {
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+}
+
+.mood-btn {
+  flex: 1;
+  padding: 10px 4px;
+  border-radius: var(--radius-sm);
+  border: 0.5px solid var(--border2);
+  background: var(--surface2);
+  font-size: 20px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s;
+  line-height: 1;
+}
+
+.mood-btn.active {
+  border-color: var(--text);
+  background: var(--surface);
+  box-shadow: 0 0 0 2px var(--text);
+}
+
+/* BRAND SELECTOR */
+.brand-item {
+  padding: 14px 16px;
+  border-bottom: 0.5px solid var(--border);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.brand-item:last-child { border-bottom: none; }
+.brand-item:active { background: var(--surface2); }
+.brand-item.selected { background: var(--surface2); }
+
+.brand-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.brand-meta {
+  font-size: 12px;
+  color: var(--text2);
+  margin-top: 2px;
+}
+
+.brand-cost {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--text3);
+}
+
+/* CHART BARS */
+.mini-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 40px;
+}
+
+.mini-bar {
+  flex: 1;
+  background: var(--surface2);
+  border-radius: 2px 2px 0 0;
+  transition: height 0.3s ease;
+  min-height: 2px;
+}
+
+.mini-bar.filled { background: var(--text); }
+
+/* ONBOARDING */
+.onboard-screen {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  z-index: 500;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 32px;
+  text-align: center;
+}
+
+.onboard-logo {
+  font-family: 'Playfair Display', serif;
+  font-size: 64px;
+  font-weight: 900;
+  line-height: 1;
+  margin-bottom: 12px;
+  color: var(--text);
+}
+
+.onboard-logo em { font-style: italic; color: var(--green); }
+
+.onboard-sub {
+  font-size: 15px;
+  color: var(--text2);
+  margin-bottom: 40px;
+  line-height: 1.6;
+}
+
+.onboard-form { width: 100%; max-width: 320px; }
+
+.form-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text3);
+  display: block;
+  margin-bottom: 8px;
+}
+
+/* WEIGHT CHART */
+.weight-entry {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border-bottom: 0.5px solid var(--border);
+}
+
+.weight-entry:last-child { border-bottom: none; }
+
+.weight-date {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--text3);
+  width: 60px;
+  flex-shrink: 0;
+}
+
+.weight-val {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text);
+  flex: 1;
+}
+
+.weight-delta {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+}
+
+.weight-delta.up { color: var(--red); }
+.weight-delta.down { color: var(--green); }
+.weight-delta.same { color: var(--text3); }
+
+/* FOOD LOG */
+.food-entry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  border-bottom: 0.5px solid var(--border);
+}
+
+.food-entry:last-child { border-bottom: none; }
+
+.food-name {
+  font-size: 14px;
+  color: var(--text);
+  flex: 1;
+}
+
+.food-time {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--text3);
+  margin-left: 12px;
+}
+
+.food-del {
+  background: none;
+  border: none;
+  color: var(--text3);
+  cursor: pointer;
+  padding: 4px;
+  margin-left: 8px;
+  font-size: 16px;
+}
+
+/* HISTORY */
+.history-day {
+  margin: 16px 20px 0;
+}
+
+.history-date {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 8px;
+}
+
+/* ANIMATIONS */
+.fade-in { animation: fadeIn 0.2s ease; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.scale-in { animation: scaleIn 0.15s ease; }
+
+@keyframes scaleIn {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+/* EMPTY STATE */
+.empty-state {
+  text-align: center;
+  padding: 48px 20px;
+  color: var(--text3);
+}
+
+.empty-state-icon {
+  font-size: 40px;
+  margin-bottom: 12px;
+  opacity: 0.4;
+}
+
+.empty-state-text {
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* TOAST */
+.toast {
+  position: fixed;
+  bottom: calc(90px + var(--safe-bottom));
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--text);
+  color: var(--bg);
+  padding: 10px 20px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  opacity: 0;
+  transition: all 0.3s ease;
+  z-index: 300;
+  white-space: nowrap;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* DIVIDER */
+.divider {
+  height: 0.5px;
+  background: var(--border);
+  margin: 0 16px;
+}
+
+/* INLINE NOTE */
+.note-text {
+  font-size: 12px;
+  color: var(--text3);
+  padding: 8px 16px;
+  font-style: italic;
+}
+
+/* SCROLL HINT */
+.scroll-hint {
+  text-align: center;
+  padding: 20px;
+  color: var(--text3);
+  font-size: 12px;
+}
+</style>
+</head>
+<body>
+
+<div id="onboard" class="onboard-screen">
+  <div class="onboard-logo">The<br><em>Stack</em></div>
+  <p class="onboard-sub">Your complete supplement system.<br>Let's set it up.</p>
+  <div class="onboard-form">
+    <label class="form-label">Your name</label>
+    <input type="text" id="onboard-name" placeholder="Jacob" style="margin-bottom:16px;">
+    <label class="form-label">Fadiman start date (day 1 = dose day)</label>
+    <input type="date" id="onboard-date" style="margin-bottom:24px;">
+    <button class="btn btn-primary btn-block" onclick="completeOnboard()" style="font-size:15px;padding:14px;">Let's go</button>
+  </div>
+</div>
+
+<div id="app">
+
+  <!-- TODAY SCREEN -->
+  <div id="screen-today" class="screen active">
+    <div class="page-header" style="padding-top:20px;">
+      <div class="page-eyebrow" id="today-date-label">Today</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px;">
+        <div class="page-title">Good<br><em id="greeting-time">morning</em></div>
+        <div id="today-day-pill"></div>
+      </div>
+    </div>
+
+    <!-- 3-day strip -->
+    <div class="day-strip" id="day-strip"></div>
+
+    <!-- Progress -->
+    <div class="card-section">
+      <div class="card">
+        <div style="padding:14px 16px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+            <span style="font-size:13px;color:var(--text2);">Today's stack</span>
+            <span style="font-family:'DM Mono',monospace;font-size:12px;color:var(--text3);" id="progress-label">0 / 0</span>
+          </div>
+          <div class="progress-wrap">
+            <div class="progress-fill" id="progress-bar" style="width:0%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Morning stack -->
+    <div class="card-section" id="morning-card-wrap">
+      <div class="card">
+        <div class="section-head">🌅 Morning — empty stomach</div>
+        <div id="morning-items"></div>
+      </div>
+    </div>
+
+    <!-- With coffee -->
+    <div class="card-section">
+      <div class="card">
+        <div class="section-head">☕ With caffeine</div>
+        <div id="coffee-items"></div>
+      </div>
+    </div>
+
+    <!-- With meal -->
+    <div class="card-section">
+      <div class="card">
+        <div class="section-head">🍽 With first meal</div>
+        <div id="meal-items"></div>
+      </div>
+    </div>
+
+    <!-- Midday -->
+    <div class="card-section">
+      <div class="card">
+        <div class="section-head">☀️ Midday</div>
+        <div id="midday-items"></div>
+      </div>
+    </div>
+
+    <!-- Night -->
+    <div class="card-section">
+      <div class="card">
+        <div class="section-head">🌙 Night</div>
+        <div id="night-items"></div>
+      </div>
+    </div>
+
+    <!-- Dose day notice -->
+    <div id="dose-day-notice" style="display:none;" class="card-section">
+      <div class="card" style="border-color:var(--green-border);background:var(--green-bg);">
+        <div style="padding:14px 16px;">
+          <div style="font-size:13px;font-weight:500;color:var(--green);margin-bottom:4px;">Stamets Stack — Dose Day</div>
+          <div style="font-size:12px;color:var(--green);opacity:0.8;">Psilocybin 0.2g + Lion's Mane + Flush Niacin together this morning. No alcohol today. Reduce stimulant load — skip Cordyceps.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Alcohol warning on dose day -->
+    <div id="alcohol-ok-notice" style="display:none;" class="card-section">
+      <div class="card" style="border-color:var(--border2);">
+        <div style="padding:12px 16px;">
+          <div style="font-size:12px;color:var(--text2);">Alcohol okay tonight if desired. Skip blood flow stack (Ginkgo/Nattokinase/Citrulline) if drinking.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Log mood + notes -->
+    <div class="card-section" style="margin-bottom:8px;">
+      <div class="card">
+        <div class="section-head">Today's log</div>
+        <div style="padding:14px 16px;">
+          <div style="font-size:13px;color:var(--text2);margin-bottom:10px;">How are you feeling?</div>
+          <div class="mood-row" id="mood-row">
+            <button class="mood-btn" onclick="setMood(1)" title="Rough">😣</button>
+            <button class="mood-btn" onclick="setMood(2)" title="Meh">😐</button>
+            <button class="mood-btn" onclick="setMood(3)" title="Good">🙂</button>
+            <button class="mood-btn" onclick="setMood(4)" title="Great">😄</button>
+            <button class="mood-btn" onclick="setMood(5)" title="Excellent">🤩</button>
+          </div>
+        </div>
+        <div class="divider"></div>
+        <div style="padding:14px 16px;">
+          <div style="font-size:13px;color:var(--text2);margin-bottom:10px;">Symptoms / notes</div>
+          <div class="symptom-grid" id="symptom-grid">
+            <button class="symptom-btn" onclick="toggleSymptom('brain fog')">Brain fog</button>
+            <button class="symptom-btn" onclick="toggleSymptom('low energy')">Low energy</button>
+            <button class="symptom-btn" onclick="toggleSymptom('great focus')">Great focus</button>
+            <button class="symptom-btn" onclick="toggleSymptom('anxiety')">Anxiety</button>
+            <button class="symptom-btn" onclick="toggleSymptom('headache')">Headache</button>
+            <button class="symptom-btn" onclick="toggleSymptom('gi discomfort')">GI discomfort</button>
+            <button class="symptom-btn" onclick="toggleSymptom('dizzy')">Dizzy</button>
+            <button class="symptom-btn" onclick="toggleSymptom('flat mood')">Flat mood</button>
+          </div>
+          <textarea id="notes-input" placeholder="Anything else..." rows="2" style="margin-top:10px;resize:none;" oninput="saveNotes()"></textarea>
+        </div>
+        <div class="divider"></div>
+        <div style="padding:12px 16px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+            <div style="font-size:13px;color:var(--text2);">Caffeine</div>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <button onclick="adjustCaffeine(-1)" style="background:var(--surface2);border:0.5px solid var(--border2);border-radius:6px;width:28px;height:28px;color:var(--text2);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;">−</button>
+              <span id="caffeine-count" style="font-family:'DM Mono',monospace;font-size:15px;font-weight:500;min-width:20px;text-align:center;">0</span>
+              <button onclick="adjustCaffeine(1)" style="background:var(--surface2);border:0.5px solid var(--border2);border-radius:6px;width:28px;height:28px;color:var(--text2);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;">+</button>
+            </div>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:10px;">
+            <div style="font-size:13px;color:var(--text2);padding-top:2px;white-space:nowrap;">Exercise</div>
+            <div style="flex:1;display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
+              <button id="exercise-toggle" onclick="toggleExercise()" style="background:var(--surface2);border:0.5px solid var(--border2);border-radius:6px;padding:4px 12px;color:var(--text3);font-family:'Instrument Sans',sans-serif;font-size:12px;cursor:pointer;">No</button>
+              <input type="text" id="exercise-note" placeholder="What did you do?" oninput="saveExerciseNote()" style="display:none;width:100%;background:transparent;border:0.5px solid var(--border2);border-radius:6px;padding:6px 10px;color:var(--text);font-family:'Instrument Sans',sans-serif;font-size:13px;outline:none;">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="height:8px;"></div>
+  </div>
+
+  <!-- GOING OUT SCREEN -->
+  <div id="screen-go" class="screen">
+    <div class="page-header" style="padding-top:20px;">
+      <div class="page-eyebrow">Situational</div>
+      <div class="page-title" style="margin-bottom:16px;" id="go-title">Going<br><em>Out</em></div>
+    </div>
+
+    <div style="padding:0 20px;margin-bottom:16px;">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;" id="situation-tabs">
+        <button class="btn btn-primary" onclick="setSituation('social')" id="sit-social">Social / going out</button>
+        <button class="btn btn-secondary" onclick="setSituation('work')" id="sit-work">Deep work</button>
+        <button class="btn btn-secondary" onclick="setSituation('pitch')" id="sit-pitch">Meeting / pitch</button>
+        <button class="btn btn-secondary" onclick="setSituation('train')" id="sit-train">Training</button>
+        <button class="btn btn-secondary" onclick="setSituation('stress')" id="sit-stress">High stress</button>
+      </div>
+    </div>
+
+    <div class="card-section" id="go-card-wrap">
+      <div class="card" id="go-card">
+        <div class="section-head" id="go-head">Social / Going Out Stack</div>
+        <div id="go-items"></div>
+        <div style="padding:12px 16px;" id="go-note-wrap">
+          <div class="note-text" id="go-note"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card-section" style="margin-top:16px;">
+      <div class="card">
+        <div class="section-head">Timing guide</div>
+        <div class="stat-row">
+          <span class="stat-label">Aniracetam</span>
+          <span class="stat-val">30–45 min before</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Rhodiola</span>
+          <span class="stat-val">First thing AM empty</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">L-Theanine</span>
+          <span class="stat-val">With coffee or as needed</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Alcohol tonight?</span>
+          <span class="stat-val" id="alcohol-status">—</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card-section" style="margin-bottom:8px;">
+      <div class="card" style="border-color:var(--pink-border);background:var(--pink-bg);">
+        <div style="padding:14px 16px;">
+          <div style="font-size:13px;font-weight:500;color:var(--pink);margin-bottom:4px;">If you're drinking tonight</div>
+          <div style="font-size:12px;color:var(--pink);opacity:0.85;line-height:1.6;">Skip Ginkgo + Nattokinase + Citrulline. Take Magnesium 400mg before bed. Hydrate aggressively. No alcohol on dose days — ever.</div>
+        </div>
+      </div>
+    </div>
+    <div style="height:8px;"></div>
+  </div>
+
+  <!-- TRACK SCREEN -->
+  <div id="screen-track" class="screen">
+    <div class="page-header" style="padding-top:20px;">
+      <div class="page-eyebrow">Track</div>
+      <div class="page-title" style="margin-bottom:16px;"><em>Body</em><br>& Food</div>
+    </div>
+
+    <!-- Insights -->
+    <div class="card-section" style="margin-bottom:16px;">
+      <div class="card">
+        <div class="section-head">Insights</div>
+        <div id="insights-list"></div>
+      </div>
+    </div>
+
+    <!-- Blood Pressure -->
+    <div class="card-section" style="margin-bottom:16px;">
+      <div class="card">
+        <div style="padding:14px 16px 10px;display:flex;align-items:center;justify-content:space-between;">
+          <div>
+            <div style="font-size:13px;color:var(--text2);margin-bottom:2px;">Blood pressure</div>
+            <div id="bp-display" style="font-family:'Playfair Display',serif;font-size:32px;font-weight:900;color:var(--text);">—/—</div>
+            <div id="bp-date" style="font-size:11px;color:var(--text3);margin-top:2px;font-family:'DM Mono',monospace;"></div>
+          </div>
+          <button class="btn btn-secondary" onclick="openBPModal()" style="font-size:13px;">Log BP</button>
+        </div>
+        <div class="divider"></div>
+        <div style="padding:12px 16px 8px;">
+          <div style="font-size:12px;color:var(--text3);margin-bottom:8px;">Systolic — last 10 readings</div>
+          <div class="mini-chart" id="bp-chart"></div>
+        </div>
+        <div id="bp-list"></div>
+      </div>
+    </div>
+
+    <!-- Weight -->
+    <div class="card-section">
+      <div class="card">
+        <div style="padding:14px 16px 10px;display:flex;align-items:center;justify-content:space-between;">
+          <div>
+            <div style="font-size:13px;color:var(--text2);margin-bottom:2px;">Current weight</div>
+            <div style="font-family:'Playfair Display',serif;font-size:32px;font-weight:900;color:var(--text);" id="current-weight-display">— lbs</div>
+          </div>
+          <button class="btn btn-secondary" onclick="openWeightModal()" style="font-size:13px;">Log weight</button>
+        </div>
+        <div class="divider"></div>
+        <div style="padding:12px 16px 8px;">
+          <div style="font-size:12px;color:var(--text3);margin-bottom:8px;">Last 7 entries</div>
+          <div class="mini-chart" id="weight-chart"></div>
+        </div>
+        <div id="weight-list"></div>
+      </div>
+    </div>
+
+    <!-- Food log -->
+    <div class="card-section" style="margin-top:16px;">
+      <div class="card">
+        <div style="padding:14px 16px 10px;display:flex;align-items:center;justify-content:space-between;">
+          <div style="font-size:15px;font-weight:500;">Today's food</div>
+          <button class="btn btn-secondary" onclick="openFoodModal()" style="font-size:13px;">Add</button>
+        </div>
+        <div id="food-list">
+          <div class="empty-state" style="padding:24px;">
+            <div class="empty-state-text" style="font-size:13px;">No food logged yet today</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Supplement history -->
+    <div class="card-section" style="margin-top:16px;margin-bottom:8px;">
+      <div class="card">
+        <div style="padding:14px 16px 10px;display:flex;align-items:center;justify-content:space-between;">
+          <div class="section-head" style="margin:0;">Daily Reports</div>
+        </div>
+        <div id="history-list">
+          <div class="empty-state" style="padding:24px;">
+            <div class="empty-state-text" style="font-size:13px;">Start logging supplements to see history</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="height:8px;"></div>
+  </div>
+
+  <!-- FOOD SCREEN -->
+  <div id="screen-food" class="screen">
+    <div class="page-header" style="padding-top:20px;">
+      <div class="page-eyebrow">Nutrition</div>
+      <div class="page-title" style="margin-bottom:16px;">Food &<br><em>Diet</em></div>
+    </div>
+
+    <!-- Diet Goals -->
+    <div class="card-section">
+      <div class="card">
+        <div style="padding:14px 16px 10px;display:flex;align-items:center;justify-content:space-between;">
+          <div class="section-head" style="margin:0;">Diet Goals</div>
+          <button class="btn btn-secondary" onclick="addDietGoal()" style="font-size:12px;">+ Add</button>
+        </div>
+        <div id="diet-goals-list"></div>
+        <div id="diet-goals-empty" style="padding:12px 16px 14px;font-size:13px;color:var(--text3);display:none;">No goals set yet — tap + Add</div>
+      </div>
+    </div>
+
+    <!-- Weekly Meal Plan -->
+    <div class="card-section" style="margin-top:16px;">
+      <div class="card">
+        <div class="section-head">This Week</div>
+        <div id="weekly-plan-list"></div>
+      </div>
+    </div>
+
+    <!-- Prep & Shopping Notes -->
+    <div class="card-section" style="margin-top:16px;margin-bottom:8px;">
+      <div class="card">
+        <div class="section-head">Prep & Shopping</div>
+        <div style="padding:10px 16px 14px;">
+          <textarea id="prep-notes-input" placeholder="Meal prep notes, shopping list, batch cooking plans…" oninput="savePrepNotes()" style="width:100%;background:transparent;border:none;color:var(--text);font-family:'Instrument Sans',sans-serif;font-size:14px;line-height:1.6;resize:none;min-height:120px;outline:none;"></textarea>
+        </div>
+      </div>
+    </div>
+    <div style="height:8px;"></div>
+  </div>
+
+  <!-- STACK SCREEN -->
+  <div id="screen-stack" class="screen">
+    <div class="page-header" style="padding-top:20px;">
+      <div class="page-eyebrow">Your Stack</div>
+      <div class="page-title" style="margin-bottom:16px;">Brands &<br><em>Details</em></div>
+    </div>
+
+    <div style="padding:0 20px;margin-bottom:12px;">
+      <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;">
+        <button class="btn btn-primary" onclick="filterStack('all')" id="filter-all" style="white-space:nowrap;font-size:13px;">All</button>
+        <button class="btn btn-secondary" onclick="filterStack('core')" id="filter-core" style="white-space:nowrap;font-size:13px;">Core</button>
+        <button class="btn btn-secondary" onclick="filterStack('bp')" id="filter-bp" style="white-space:nowrap;font-size:13px;">BP</button>
+        <button class="btn btn-secondary" onclick="filterStack('micro')" id="filter-micro" style="white-space:nowrap;font-size:13px;">Micro</button>
+        <button class="btn btn-secondary" onclick="filterStack('lever')" id="filter-lever" style="white-space:nowrap;font-size:13px;">Levers</button>
+      </div>
+    </div>
+
+    <div class="card-section" id="stack-list-wrap">
+      <div class="card" id="stack-list"></div>
+    </div>
+
+    <div class="card-section" style="margin-top:16px;margin-bottom:8px;">
+      <div class="card">
+        <div style="padding:14px 16px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <span style="font-size:13px;color:var(--text2);">Estimated monthly cost</span>
+            <span style="font-family:'DM Mono',monospace;font-size:16px;font-weight:500;color:var(--text);" id="monthly-cost">$—</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="height:8px;"></div>
+  </div>
+
+  <!-- SETTINGS / MICRODOSE SCREEN -->
+  <div id="screen-settings" class="screen">
+    <div class="page-header" style="padding-top:20px;">
+      <div class="page-eyebrow">Protocol</div>
+      <div class="page-title" style="margin-bottom:16px;">Micro &<br><em>Settings</em></div>
+    </div>
+
+    <!-- Fadiman settings -->
+    <div class="card-section">
+      <div class="card">
+        <div class="section-head">Fadiman protocol</div>
+        <div style="padding:14px 16px;">
+          <label class="form-label" style="margin-bottom:8px;">Cycle start date (Day 1 = dose day)</label>
+          <input type="date" id="fadiman-date-input" onchange="updateFadimanDate()">
+          <div style="margin-top:12px;" id="cycle-status-display"></div>
+        </div>
+        <div class="divider"></div>
+        <div style="padding:14px 16px;">
+          <div style="font-size:13px;color:var(--text2);margin-bottom:10px;">Get back on schedule</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <button onclick="shiftFadimanStart(1)" style="background:var(--surface2);border:0.5px solid var(--border2);border-radius:var(--radius-sm);padding:10px 14px;color:var(--text);font-family:'Instrument Sans',sans-serif;font-size:13px;text-align:left;cursor:pointer;">
+              <span style="color:var(--gold);font-weight:500;">Missed a dose day</span> — shift schedule forward 1 day
+            </button>
+            <button onclick="resetFadimanToToday()" style="background:var(--surface2);border:0.5px solid var(--border2);border-radius:var(--radius-sm);padding:10px 14px;color:var(--text);font-family:'Instrument Sans',sans-serif;font-size:13px;text-align:left;cursor:pointer;">
+              <span style="color:var(--green);font-weight:500;">Start fresh</span> — make today a dose day
+            </button>
+            <div style="display:flex;align-items:center;gap:8px;margin-top:2px;">
+              <span style="font-size:12px;color:var(--text3);flex:1;">Fine-tune:</span>
+              <button onclick="shiftFadimanStart(-1)" style="background:var(--surface2);border:0.5px solid var(--border2);border-radius:var(--radius-sm);padding:6px 14px;color:var(--text2);font-family:'DM Mono',monospace;font-size:13px;cursor:pointer;">← 1 day</button>
+              <button onclick="shiftFadimanStart(1)" style="background:var(--surface2);border:0.5px solid var(--border2);border-radius:var(--radius-sm);padding:6px 14px;color:var(--text2);font-family:'DM Mono',monospace;font-size:13px;cursor:pointer;">1 day →</button>
+            </div>
+          </div>
+        </div>
+        <div class="divider"></div>
+        <div style="padding:14px 16px;">
+          <div style="font-size:13px;color:var(--text2);margin-bottom:12px;">Current cycle calendar</div>
+          <div id="mini-calendar" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;"></div>
+          <div style="display:flex;gap:12px;margin-top:10px;flex-wrap:wrap;">
+            <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text3);"><div style="width:10px;height:10px;border-radius:2px;background:var(--green);"></div>Dose</div>
+            <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text3);"><div style="width:10px;height:10px;border-radius:2px;background:var(--gold);opacity:0.6;"></div>Transition</div>
+            <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text3);"><div style="width:10px;height:10px;border-radius:2px;background:var(--surface2);border:0.5px solid var(--border2);"></div>Rest</div>
+            <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text3);"><div style="width:10px;height:10px;border-radius:2px;background:var(--pink);opacity:0.5;"></div>Break</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cycle management -->
+    <div class="card-section" style="margin-top:16px;">
+      <div class="card">
+        <div class="section-head">Cycle management</div>
+        <div class="stat-row">
+          <span class="stat-label">Protocol</span>
+          <span class="stat-val">Fadiman (1 on / 2 off)</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Starting dose</span>
+          <span class="stat-val">0.2g</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Cycle length</span>
+          <span class="stat-val">4–6 weeks</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Break period</span>
+          <span class="stat-val">2 weeks min</span>
+        </div>
+        <div class="stat-row" id="days-in-cycle-row">
+          <span class="stat-label">Days in current cycle</span>
+          <span class="stat-val" id="days-in-cycle">—</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- User settings -->
+    <div class="card-section" style="margin-top:16px;">
+      <div class="card">
+        <div class="section-head">Personal</div>
+        <div style="padding:14px 16px;">
+          <label class="form-label">Name</label>
+          <input type="text" id="settings-name" placeholder="Jacob" oninput="saveSetting('name', this.value)" style="margin-bottom:12px;">
+          <label class="form-label">Height (for reference)</label>
+          <input type="text" id="settings-height" placeholder='e.g. 5&apos;11"' oninput="saveSetting('height', this.value)" style="margin-bottom:12px;">
+          <label class="form-label">Target weight (lbs)</label>
+          <input type="number" id="settings-target-weight" placeholder="175" oninput="saveSetting('targetWeight', this.value)">
+        </div>
+      </div>
+    </div>
+
+    <!-- Rules quick ref -->
+    <div class="card-section" style="margin-top:16px;margin-bottom:8px;">
+      <div class="card" style="border-color:var(--pink-border);">
+        <div class="section-head" style="color:var(--pink);">Non-negotiable rules</div>
+        <div class="stat-row"><span class="stat-label" style="font-size:12px;">No grapefruit — ever</span><span style="font-size:16px;">🚫</span></div>
+        <div class="stat-row"><span class="stat-label" style="font-size:12px;">No alcohol on dose days</span><span style="font-size:16px;">🚫</span></div>
+        <div class="stat-row"><span class="stat-label" style="font-size:12px;">No Rhodiola late in day</span><span style="font-size:16px;">🚫</span></div>
+        <div class="stat-row"><span class="stat-label" style="font-size:12px;">Skip blood flow stack if drinking</span><span style="font-size:16px;">⚠️</span></div>
+        <div class="stat-row"><span class="stat-label" style="font-size:12px;">One change at a time</span><span style="font-size:16px;">✓</span></div>
+        <div class="stat-row"><span class="stat-label" style="font-size:12px;">If 30mg zinc → add 1–2mg copper</span><span style="font-size:16px;">✓</span></div>
+      </div>
+    </div>
+    <div style="height:8px;"></div>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <nav class="nav">
+    <button class="nav-btn active" id="nav-today" onclick="showScreen('today')">
+      <div class="nav-icon">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      </div>
+      <span class="nav-label">Today</span>
+    </button>
+    <button class="nav-btn" id="nav-go" onclick="showScreen('go')">
+      <div class="nav-icon">
+        <svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      </div>
+      <span class="nav-label">Go Out</span>
+    </button>
+    <button class="nav-btn" id="nav-track" onclick="showScreen('track')">
+      <div class="nav-icon">
+        <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 16l4-4 4 4 4-8"/></svg>
+      </div>
+      <span class="nav-label">Track</span>
+    </button>
+    <button class="nav-btn" id="nav-food" onclick="showScreen('food')">
+      <div class="nav-icon">
+        <svg viewBox="0 0 24 24"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/></svg>
+      </div>
+      <span class="nav-label">Food</span>
+    </button>
+    <button class="nav-btn" id="nav-stack" onclick="showScreen('stack')">
+      <div class="nav-icon">
+        <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+      </div>
+      <span class="nav-label">Stack</span>
+    </button>
+    <button class="nav-btn" id="nav-settings" onclick="showScreen('settings')">
+      <div class="nav-icon">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </div>
+      <span class="nav-label">Protocol</span>
+    </button>
+  </nav>
+</div>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="modal-weight" onclick="closeModal('modal-weight')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Log Weight</div>
+    <div class="modal-body">
+      <label class="form-label" style="margin-bottom:8px;">Weight (lbs)</label>
+      <input type="number" id="weight-input" placeholder="175" step="0.1" style="margin-bottom:16px;font-size:24px;text-align:center;font-weight:500;">
+      <label class="form-label" style="margin-bottom:8px;">Date</label>
+      <input type="date" id="weight-date-input" style="margin-bottom:20px;">
+      <button class="btn btn-primary btn-block" onclick="saveWeight()" style="font-size:15px;padding:14px;margin-bottom:8px;">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-bp" onclick="closeModal('modal-bp')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Log Blood Pressure</div>
+    <div class="modal-body">
+      <div style="display:flex;gap:12px;margin-bottom:16px;">
+        <div style="flex:1;">
+          <label class="form-label" style="margin-bottom:8px;">Systolic</label>
+          <input type="number" id="bp-systolic-input" placeholder="120" style="font-size:24px;text-align:center;font-weight:500;" onkeydown="if(event.key==='Enter')document.getElementById('bp-diastolic-input').focus()">
+        </div>
+        <div style="display:flex;align-items:center;padding-top:28px;color:var(--text3);font-size:20px;">/</div>
+        <div style="flex:1;">
+          <label class="form-label" style="margin-bottom:8px;">Diastolic</label>
+          <input type="number" id="bp-diastolic-input" placeholder="80" style="font-size:24px;text-align:center;font-weight:500;" onkeydown="if(event.key==='Enter')saveBP()">
+        </div>
+      </div>
+      <label class="form-label" style="margin-bottom:8px;">Date</label>
+      <input type="date" id="bp-date-input" style="margin-bottom:20px;">
+      <button class="btn btn-primary btn-block" onclick="saveBP()" style="font-size:15px;padding:14px;margin-bottom:8px;">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-food" onclick="closeModal('modal-food')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Log Food</div>
+    <div class="modal-body">
+      <label class="form-label" style="margin-bottom:8px;">What did you eat?</label>
+      <input type="text" id="food-input" placeholder="e.g. Salmon + roasted beets + greens" style="margin-bottom:12px;" onkeydown="if(event.key==='Enter')saveFood()">
+      <label class="form-label" style="margin-bottom:8px;">Meal type</label>
+      <select id="food-type-input" style="margin-bottom:20px;">
+        <option>Breakfast</option>
+        <option>Lunch</option>
+        <option>Dinner</option>
+        <option>Snack</option>
+      </select>
+      <button class="btn btn-primary btn-block" onclick="saveFood()" style="font-size:15px;padding:14px;margin-bottom:8px;">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-brand" onclick="closeModal('modal-brand')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="brand-modal-title">Select Brand</div>
+    <div class="modal-body" style="padding-bottom:8px;">
+      <div id="brand-options"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+// DATA
+// ============================================================
+
+const SUPPLEMENTS = [
+  // MORNING
+  { id: 'lions-mane', name: "Lion's Mane", dose: "500mg AM + 500mg midday", tier: 'core', time: 'morning', color: '#2d7a4f', note: "Dual extract fruiting body · 8:1 · neuroplasticity base", brands: [
+    { name: "Nootropics Depot", pros: "Best quality, verified beta-glucans, consistent", cons: "Powder only for best value", cost: 22, link: "nootropicsdepot.com" },
+    { name: "Real Mushrooms", pros: "Excellent fruiting body, widely trusted", cons: "Slightly pricier", cost: 30, link: "realmushrooms.com" },
+    { name: "Host Defense", pros: "Paul Stamets brand, widely available", cons: "Mycelium blend, not pure fruiting body", cost: 28, link: "hostdefense.com" }
+  ]},
+  { id: 'cordyceps', name: "Cordyceps", doseDayExclude: true, dose: "1000–1500mg", tier: 'lever', time: 'morning', color: '#8a4a2a', note: "Before activity · skip dose days · 10:1 fruiting body", brands: [
+    { name: "Nootropics Depot", pros: "Standardized cordycepin, best value at dose", cons: "Powder form", cost: 20, link: "nootropicsdepot.com" },
+    { name: "Real Mushrooms", pros: "Clean label, verified actives", cons: "Slightly higher cost", cost: 26, link: "realmushrooms.com" }
+  ]},
+  { id: 'rhodiola', name: "Rhodiola Rosea", dose: "200–400mg", tier: 'lever', time: 'morning', color: '#8a4a2a', note: "High-output days only · 3% rosavins / 1% salidroside", brands: [
+    { name: "Nootropics Depot", pros: "Standardized extract, best value", cons: "None", cost: 15, link: "nootropicsdepot.com" },
+    { name: "Thorne", pros: "Pharmaceutical grade, widely trusted", cons: "More expensive", cost: 28, link: "thorne.com" },
+    { name: "Gaia Herbs", pros: "Clean, whole herb", cons: "Less standardized", cost: 22, link: "gaiaherbs.com" }
+  ]},
+  { id: 'creatine', name: "Creatine Monohydrate", dose: "5g daily", tier: 'core', time: 'morning', color: '#2d7a4f', note: "Daily, timing flexible · Creapure = purest form", brands: [
+    { name: "Creapure (any brand)", pros: "Gold standard purity, most studied form", cons: "None", cost: 18, link: "" },
+    { name: "Thorne Creatine", pros: "NSF certified, trusted brand", cons: "Slightly premium price", cost: 22, link: "thorne.com" },
+    { name: "Bulk Supplements", pros: "Cheapest per gram, decent quality", cons: "Not Creapure certified", cost: 12, link: "bulksupplements.com" }
+  ]},
+  { id: 'citrulline', name: "L-Citrulline", dose: "3g (→ 6g at week 8 if needed)", tier: 'bp', time: 'morning', color: '#5d4a8a', note: "BP support · start 3g · skip alcohol/NSAID days", brands: [
+    { name: "Nootropics Depot", pros: "Pharmaceutical grade, excellent value as powder", cons: "Powder only", cost: 12, link: "nootropicsdepot.com" },
+    { name: "Bulk Supplements", pros: "Cheapest option, consistent quality", cons: "No frills", cost: 10, link: "bulksupplements.com" }
+  ]},
+  { id: 'coq10', name: "CoQ10 (Ubiquinol)", dose: "100–200mg", tier: 'bp', time: 'morning', color: '#5d4a8a', note: "Fat-soluble · take with food · ubiquinol form preferred", brands: [
+    { name: "Jarrow Ubiquinol", pros: "Best value ubiquinol, well absorbed", cons: "None", cost: 28, link: "jarrow.com" },
+    { name: "Thorne CoQ10", pros: "Highly bioavailable, trusted", cons: "Most expensive option", cost: 42, link: "thorne.com" },
+    { name: "NOW Ubiquinol", pros: "Budget friendly, decent quality", cons: "Less premium", cost: 24, link: "nowfoods.com" }
+  ]},
+  { id: 'piracetam', name: "Piracetam", dose: "1.6g × 3/day", tier: 'micro', time: 'morning', color: '#2d7a4f', note: "Daily baseline · builds over 2–4 weeks · needs CDP-Choline", brands: [
+    { name: "Nootropics Depot", pros: "Most reliable source, tested for purity", cons: "Powder, slightly bitter", cost: 18, link: "nootropicsdepot.com" },
+    { name: "Ceretropic", pros: "Trusted nootropics vendor", cons: "Less mainstream", cost: 20, link: "ceretropic.com" }
+  ]},
+  { id: 'collagen', name: "Collagen Peptides", dose: "10–15g", tier: 'core', time: 'morning', color: '#2d7a4f', note: "Skin + connective tissue · take with Vitamin C", brands: [
+    { name: "Vital Proteins", pros: "Most popular, widely available, good mixability", cons: "Premium price", cost: 35, link: "vitalproteins.com" },
+    { name: "Bulk Supplements", pros: "Same quality at fraction of price", cons: "No branding", cost: 18, link: "bulksupplements.com" },
+    { name: "Costco Collagen", pros: "Best value per gram if you have Costco", cons: "Large quantity commitment", cost: 14, link: "costco.com" }
+  ]},
+  // COFFEE
+  { id: 'theanine', name: "L-Theanine", dose: "100–200mg", tier: 'core', time: 'coffee', color: '#2d7a4f', note: "With caffeine · smooths jitters · alpha brain waves", brands: [
+    { name: "Nootropics Depot (Suntheanine)", pros: "Pure Suntheanine form, most studied", cons: "None", cost: 12, link: "nootropicsdepot.com" },
+    { name: "NOW L-Theanine", pros: "Cheap, widely available", cons: "Not Suntheanine brand", cost: 10, link: "nowfoods.com" }
+  ]},
+  // MEAL
+  { id: 'omega3', name: "Omega-3 EPA+DHA", dose: "1500–3000mg EPA+DHA", tier: 'core', time: 'meal', color: '#2d7a4f', note: "Verify EPA/DHA content, not total oil weight", brands: [
+    { name: "Thorne Super EPA", pros: "High potency, ultra-pure, triglyceride form", cons: "Expensive", cost: 45, link: "thorne.com" },
+    { name: "Nordic Naturals Ultimate Omega", pros: "Gold standard brand, excellent quality", cons: "Premium price", cost: 38, link: "nordicnaturals.com" },
+    { name: "Costco Omega-3", pros: "Surprisingly good quality, great value", cons: "Less prestigious brand", cost: 18, link: "costco.com" }
+  ]},
+  { id: 'd3k2', name: "Vitamin D3 + K2", dose: "2000–4000 IU D3 + 100mcg K2", tier: 'core', time: 'meal', color: '#2d7a4f', note: "Always together · K2 MK-7 form directs calcium", brands: [
+    { name: "Thorne D3/K2", pros: "Best combination product, pharmaceutical grade", cons: "Higher cost", cost: 22, link: "thorne.com" },
+    { name: "Life Extension D3/K2", pros: "High potency, excellent value", cons: "None", cost: 18, link: "lifeextension.com" }
+  ]},
+  { id: 'zinc', name: "Zinc", dose: "15–30mg", tier: 'core', time: 'meal', color: '#2d7a4f', note: "If 30mg → add 1–2mg Copper · with food", brands: [
+    { name: "Thorne Zinc Bisglycinate", pros: "Best absorbed form, gentle on stomach", cons: "More expensive", cost: 15, link: "thorne.com" },
+    { name: "NOW Zinc Gluconate", pros: "Budget option, decent absorption", cons: "Less bioavailable than bisglycinate", cost: 8, link: "nowfoods.com" }
+  ]},
+  { id: 'bcomplex', name: "Methylated B-Complex", dose: "1 cap", tier: 'core', time: 'meal', color: '#2d7a4f', note: "Methylfolate + methylcobalamin · B6 as P-5-P under 20mg", brands: [
+    { name: "Thorne Basic B", pros: "Best methylated B-complex, low B6 dose", cons: "Pricier", cost: 22, link: "thorne.com" },
+    { name: "Jarrow B-Right", pros: "Good methylated forms, affordable", cons: "Slightly higher B6", cost: 16, link: "jarrow.com" },
+    { name: "Pure Encapsulations B-Complex", pros: "Clean formula, no fillers", cons: "Expensive", cost: 28, link: "pureencapsulations.com" }
+  ]},
+  { id: 'astaxanthin', name: "Astaxanthin", dose: "4–8mg", tier: 'core', time: 'meal', color: '#2d7a4f', note: "Most potent antioxidant for skin · fat-soluble with food", brands: [
+    { name: "Nutrex Hawaii BioAstin", pros: "Natural astaxanthin, best quality available", cons: "Only one real option at this quality", cost: 22, link: "nutrex-hawaii.com" },
+    { name: "NOW Astaxanthin", pros: "Budget option", cons: "Synthetic form, less bioavailable", cost: 14, link: "nowfoods.com" }
+  ]},
+  { id: 'hibiscus', name: "Hibiscus Extract", dose: "per label", tier: 'bp', time: 'meal', color: '#5d4a8a', note: "Same time daily · strong BP evidence · or as tea", brands: [
+    { name: "Hibiscus tea (daily)", pros: "Cheapest, evidence-backed, enjoyable", cons: "Less precise dosing", cost: 6, link: "" },
+    { name: "Planetary Herbals Hibiscus", pros: "Standardized extract, consistent dosing", cons: "More expensive than tea", cost: 16, link: "" }
+  ]},
+  { id: 'cdp', name: "CDP-Choline (Citicoline)", dose: "250mg", tier: 'core', time: 'meal', color: '#2d7a4f', note: "Critical pairing with Piracetam · do not stack more cholinergics", brands: [
+    { name: "Nootropics Depot Cognizin", pros: "Cognizin branded, most studied form", cons: "None", cost: 22, link: "nootropicsdepot.com" },
+    { name: "Jarrow Citicoline", pros: "Good quality, widely available", cons: "Not Cognizin branded", cost: 18, link: "jarrow.com" }
+  ]},
+  // MIDDAY
+  { id: 'aniracetam', name: "Aniracetam", dose: "750mg with fat", tier: 'lever', time: 'situational', color: '#8a4a2a', note: "Social / events / creative · 30–45 min before · fat-soluble", brands: [
+    { name: "Nootropics Depot", pros: "Most reliable, tested purity", cons: "Powder or capsule options", cost: 16, link: "nootropicsdepot.com" },
+    { name: "Ceretropic", pros: "Trusted vendor", cons: "Less mainstream", cost: 18, link: "ceretropic.com" }
+  ]},
+  // NIGHT
+  { id: 'reishi', name: "Reishi", dose: "1000–1500mg", tier: 'core', time: 'night', color: '#2d7a4f', note: "Dual extract · high beta-glucans + triterpenes · calming", brands: [
+    { name: "Nootropics Depot", pros: "Dual extracted, verified actives", cons: "None", cost: 20, link: "nootropicsdepot.com" },
+    { name: "Real Mushrooms", pros: "Excellent quality, trusted brand", cons: "Slightly higher cost", cost: 28, link: "realmushrooms.com" }
+  ]},
+  { id: 'magnesium', name: "Magnesium Glycinate", dose: "200–400mg", tier: 'core', time: 'night', color: '#2d7a4f', note: "Deep sleep + BP + replenishes omeprazole depletion", brands: [
+    { name: "Thorne Magnesium Bisglycinate", pros: "Best absorbed form, pharmaceutical grade", cons: "More expensive", cost: 20, link: "thorne.com" },
+    { name: "Doctor's Best High Absorption", pros: "Best value glycinate, highly rated", cons: "None", cost: 14, link: "" },
+    { name: "NOW Magnesium Glycinate", pros: "Budget option, decent quality", cons: "Less premium", cost: 12, link: "nowfoods.com" }
+  ]},
+  { id: 'bacopa', name: "Bacopa Monnieri", dose: "300mg", tier: 'lever', time: 'night', color: '#8a4a2a', note: "8–12 week cycles · with fat · if groggy → every other night", brands: [
+    { name: "Nootropics Depot", pros: "Standardized bacosides, excellent value", cons: "None", cost: 14, link: "nootropicsdepot.com" },
+    { name: "Thorne Bacopa", pros: "Pharmaceutical grade", cons: "More expensive", cost: 24, link: "thorne.com" }
+  ]},
+  { id: 'probiotic', name: "Probiotic", dose: "per label", tier: 'core', time: 'night', color: '#2d7a4f', note: "Daily baseline · Lactobacillus reuteri + Bifidobacterium", brands: [
+    { name: "Seed DS-01", pros: "Most researched consumer probiotic, dual capsule", cons: "Expensive at $50/mo", cost: 50, link: "seed.com" },
+    { name: "Garden of Life Dr. Formulated", pros: "Good strains, widely available, affordable", cons: "Less rigorous research than Seed", cost: 24, link: "" },
+    { name: "Jarrow Formulas Ideal Bowel", pros: "Budget option with good strains", cons: "Fewer strains", cost: 18, link: "jarrow.com" }
+  ]},
+  // PSILOCYBIN
+  { id: 'psilocybin', name: "Psilocybin", dose: "0.2g", tier: 'micro', time: 'dose-only', color: '#2d7a4f', note: "Dose days only · with Lion's Mane + Flush Niacin · no alcohol today", brands: [
+    { name: "Personal cultivation", pros: "Most common approach, full control of strain/dose", cons: "Legal gray area — know your state laws", cost: 15, link: "" }
+  ]},
+  { id: 'niacin', name: "Flush Niacin", dose: "100–200mg", tier: 'micro', time: 'dose-only', color: '#2d7a4f', note: "Dose days only · expect 20–30 min flushing · normal and harmless", brands: [
+    { name: "NOW Niacin (flush)", pros: "Cheap, immediate release, correct form", cons: "Must be flush niacin NOT niacinamide", cost: 8, link: "nowfoods.com" },
+    { name: "Thorne Niacin", pros: "Pharmaceutical grade", cons: "More expensive for a simple compound", cost: 14, link: "thorne.com" }
+  ]},
+];
+
+const SITUATIONS = {
+  social: {
+    label: "Social / Going Out", title: ['Going', 'Out'],
+    items: [
+      { name: "Aniracetam", dose: "750mg with fat", time: "30–45 min before" },
+      { name: "L-Theanine", dose: "200mg", time: "With coffee or as needed", inStack: true }
+    ],
+    note: "Calm, articulate, present. Pairs okay with moderate alcohol — won't amplify intoxication. Skip blood flow stack if drinking.",
+    alcohol: "Okay in moderation — skip Ginkgo/Nattokinase/Citrulline"
+  },
+  work: {
+    label: "Deep Work / Creative", title: ['Deep', 'Work'],
+    items: [
+      { name: "Rhodiola", dose: "200–400mg", time: "First thing empty stomach AM" },
+      { name: "Aniracetam", dose: "750mg with fat", time: "With first meal" },
+      { name: "Piracetam", dose: "1.6g", time: "Morning dose", inStack: true },
+      { name: "Lion's Mane", dose: "500mg", time: "Morning dose", inStack: true }
+    ],
+    note: "Best creative stack. Rhodiola for fatigue resistance, Aniracetam for lateral thinking. On dose days — Stamets Stack handles this.",
+    alcohol: "Avoid — ruins deep work recovery"
+  },
+  pitch: {
+    label: "Meeting / Pitch", title: ['Meeting', 'Pitch'],
+    items: [
+      { name: "Aniracetam", dose: "750mg with fat", time: "45 min before" },
+      { name: "Rhodiola", dose: "200mg", time: "Morning empty stomach" },
+      { name: "L-Theanine", dose: "200mg", time: "With coffee", inStack: true },
+      { name: "CDP-Choline", dose: "250mg", time: "Morning dose", inStack: true }
+    ],
+    note: "Best combo for high-stakes verbal performance. Aniracetam for articulation and composure, Rhodiola for pressure resistance.",
+    alcohol: "Avoid day of"
+  },
+  train: {
+    label: "Physical Training", title: ['Physical', 'Training'],
+    items: [
+      { name: "Cordyceps", dose: "1000mg", time: "30 min before training" },
+      { name: "Creatine", dose: "5g", time: "Morning stack", inStack: true },
+      { name: "L-Citrulline", dose: "3g", time: "Morning stack", inStack: true }
+    ],
+    note: "Cordyceps before training is the key timing move. Everything else already running. Skip Aniracetam on pure physical days.",
+    alcohol: "Skip — defeats recovery"
+  },
+  stress: {
+    label: "High Stress Day", title: ['High', 'Stress'],
+    items: [
+      { name: "Ashwagandha", dose: "300–600mg", time: "Night with Reishi + Magnesium" },
+      { name: "L-Theanine", dose: "200mg", time: "As needed throughout day", inStack: true },
+      { name: "Reishi", dose: "1000mg", time: "Night — already running", inStack: true },
+      { name: "Magnesium Glycinate", dose: "400mg", time: "Night — already running", inStack: true }
+    ],
+    note: "Don't fight stress with stimulants. Reishi + Magnesium + Ashwagandha at night is your reset stack. Let the day wind down.",
+    alcohol: "Avoid — worsens anxiety rebound"
+  }
+};
+
+// ============================================================
+// STATE & STORAGE
+// ============================================================
+
+let state = {
+  name: '',
+  fadimanStart: null,
+  selectedBrands: {},
+  logs: {},
+  weightLog: [],
+  foodLog: [],
+  height: '',
+  targetWeight: '',
+  dietGoals: [],
+  weeklyPlan: {},
+  prepNotes: '',
+  bpLog: []
+};
+
+function loadState() {
+  const saved = localStorage.getItem('stack-state');
+  if (saved) {
+    try { state = { ...state, ...JSON.parse(saved) }; } catch(e) {}
+  }
+}
+
+function saveState() {
+  localStorage.setItem('stack-state', JSON.stringify(state));
+}
+
+function todayKey() {
+  return new Date().toISOString().split('T')[0];
+}
+
+function getLog(dateKey) {
+  if (!state.logs[dateKey]) state.logs[dateKey] = { checked: {}, mood: null, symptoms: [], notes: '', caffeine: 0, exercise: { done: false, note: '' } };
+  const log = state.logs[dateKey];
+  if (log.caffeine === undefined) log.caffeine = 0;
+  if (!log.exercise) log.exercise = { done: false, note: '' };
+  return log;
+}
+
+// ============================================================
+// FADIMAN
+// ============================================================
+
+function getFadimanDay(dateStr) {
+  if (!state.fadimanStart) return null;
+  const start = new Date(state.fadimanStart);
+  const target = new Date(dateStr);
+  start.setHours(0,0,0,0);
+  target.setHours(0,0,0,0);
+  const diffDays = Math.round((target - start) / 86400000);
+  if (diffDays < 0) return null;
+
+  // 4–6 week cycles = 21 days on, 14 days off
+  const cycleLength = 35;
+  const activeDays = 21;
+  const posInCycle = diffDays % cycleLength;
+
+  if (posInCycle >= activeDays) return 'break';
+  const posInActive = posInCycle % 3;
+  if (posInActive === 0) return 'dose';
+  if (posInActive === 1) return 'transition';
+  return 'rest';
+}
+
+function getDayTypeLabel(type) {
+  const map = { dose: 'Dose Day', transition: 'Transition', rest: 'Rest Day', break: 'Break', null: 'Not set' };
+  return map[type] || 'Not set';
+}
+
+function getDayTypeColor(type) {
+  const map = { dose: 'var(--green)', transition: 'var(--gold)', rest: 'var(--text3)', break: 'var(--pink)', null: 'var(--text3)' };
+  return map[type] || 'var(--text3)';
+}
+
+// ============================================================
+// ONBOARDING
+// ============================================================
+
+function checkOnboard() {
+  if (state.name && state.fadimanStart !== undefined) {
+    document.getElementById('onboard').style.display = 'none';
+    initApp();
+  } else if (state.name) {
+    document.getElementById('onboard').style.display = 'none';
+    initApp();
+  }
+  // set today's date as default
+  const today = new Date();
+  const dateStr = today.toISOString().split('T')[0];
+  document.getElementById('onboard-date').value = dateStr;
+}
+
+function completeOnboard() {
+  const name = document.getElementById('onboard-name').value.trim();
+  const date = document.getElementById('onboard-date').value;
+  if (!name) { showToast('Enter your name first'); return; }
+  state.name = name;
+  if (date) state.fadimanStart = date;
+  saveState();
+  document.getElementById('onboard').style.display = 'none';
+  initApp();
+}
+
+// ============================================================
+// INIT
+// ============================================================
+
+function initApp() {
+  renderToday();
+  renderGoOut('social');
+  renderStack('all');
+  renderSettings();
+  renderTrack();
+  renderFood();
+}
+
+// ============================================================
+// TODAY SCREEN
+// ============================================================
+
+function renderToday() {
+  const now = new Date();
+  const hour = now.getHours();
+  let greeting = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening';
+  document.getElementById('greeting-time').textContent = greeting;
+
+  const dateOpts = { weekday: 'long', month: 'long', day: 'numeric' };
+  document.getElementById('today-date-label').textContent = now.toLocaleDateString('en-US', dateOpts);
+
+  const todayKey2 = todayKey();
+  const todayType = getFadimanDay(todayKey2);
+
+  // Day pill
+  const pill = document.getElementById('today-day-pill');
+  pill.innerHTML = `<div class="day-pill ${todayType || 'notset'}">${getDayTypeLabel(todayType)}</div>`;
+
+  // Show/hide notices
+  document.getElementById('dose-day-notice').style.display = todayType === 'dose' ? 'block' : 'none';
+  document.getElementById('alcohol-ok-notice').style.display = (todayType === 'transition' || todayType === 'rest') ? 'block' : 'none';
+
+  // 3-day strip
+  renderDayStrip();
+
+  // Supplement sections — filter Cordyceps on dose days
+  const isDoseDay = todayType === 'dose';
+  renderSuppSection('morning-items', 'morning', isDoseDay);
+  renderSuppSection('coffee-items', 'coffee');
+  renderSuppSection('meal-items', 'meal');
+  renderSuppSection('midday-items', 'midday-only');
+  renderSuppSection('night-items', 'night');
+  // Add Piracetam 3rd dose to night
+  const nightEl = document.getElementById('night-items');
+  const piracetamNight = { id: 'piracetam-night', name: "Piracetam (3rd dose)", dose: "1.6g", note: "Final daily dose", tier: 'micro', color: '#7ab87a' };
+  nightEl.appendChild(createSuppItem(piracetamNight, 'night'));
+
+  // Add midday splits to midday section
+  const middayEl = document.getElementById('midday-items');
+  const middaySplits = [
+    { id: 'lions-mane-mid', name: "Lion's Mane (split)", dose: "500mg", note: "Second half of daily dose", tier: 'core' },
+    { id: 'piracetam-mid', name: "Piracetam (2nd dose)", dose: "1.6g", note: "Mid-day dose", tier: 'micro' },
+    ...(!isDoseDay ? [{ id: 'cordyceps-mid', name: "Cordyceps (2nd dose)", dose: "500–1000mg", note: "Before activity only · skip on dose/rest days", tier: 'lever', color: '#d4956a' }] : [])
+  ];
+  middaySplits.forEach(s => {
+    middayEl.appendChild(createSuppItem(s, 'midday'));
+  });
+
+  // Add dose-day items to morning if dose day
+  if (todayType === 'dose') {
+    const morningEl = document.getElementById('morning-items');
+    const doseItems = [
+      { id: 'psilocybin', name: "Psilocybin", dose: "0.2g", note: "Stamets Stack · with Lion's Mane + Flush Niacin", tier: 'micro' },
+      { id: 'niacin', name: "Flush Niacin", dose: "100–200mg", note: "Dose days only · expect flushing 20–30 min", tier: 'micro' }
+    ];
+    const divEl = document.createElement('div');
+    divEl.className = 'section-head';
+    divEl.style.background = 'var(--green-bg)';
+    divEl.style.color = 'var(--green)';
+    divEl.textContent = '🍄 Stamets Stack — Dose Day';
+    morningEl.appendChild(divEl);
+    doseItems.forEach(s => morningEl.appendChild(createSuppItem(s, 'morning')));
+  }
+
+  updateProgress();
+  renderMoodAndSymptoms();
+}
+
+function renderDayStrip() {
+  const strip = document.getElementById('day-strip');
+  strip.innerHTML = '';
+  const offsets = [-1, 0, 1];
+  const labels = ['Yesterday', 'Today', 'Tomorrow'];
+  const now = new Date();
+
+  offsets.forEach((offset, i) => {
+    const d = new Date(now);
+    d.setDate(d.getDate() + offset);
+    const key = d.toISOString().split('T')[0];
+    const type = getFadimanDay(key);
+    const isToday = offset === 0;
+
+    const card = document.createElement('div');
+    card.className = `day-card${isToday ? ' today' : ''}`;
+
+    const labelDiv = document.createElement('div');
+    labelDiv.className = 'day-card-label';
+    labelDiv.textContent = labels[i];
+
+    const dateDiv = document.createElement('div');
+    dateDiv.className = 'day-card-date';
+    dateDiv.textContent = d.getDate();
+
+    const typeDiv = document.createElement('div');
+    typeDiv.className = 'day-card-type';
+    typeDiv.style.color = isToday ? 'rgba(212,168,75,0.7)' : getDayTypeColor(type);
+    typeDiv.textContent = type ? getDayTypeLabel(type) : '—';
+
+    card.appendChild(labelDiv);
+    card.appendChild(dateDiv);
+    card.appendChild(typeDiv);
+    strip.appendChild(card);
+  });
+}
+
+function createSuppItem(supp, section) {
+  const log = getLog(todayKey());
+  const checked = log.checked[supp.id] || false;
+
+  const item = document.createElement('div');
+  item.className = 'supp-item';
+  item.id = `supp-${supp.id}`;
+  item.onclick = () => toggleSupp(supp.id, supp.name);
+
+  const checkDiv = document.createElement('div');
+  checkDiv.className = `supp-check${checked ? ' checked' : ''}`;
+  checkDiv.id = `check-${supp.id}`;
+  checkDiv.innerHTML = `<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+
+  const dot = document.createElement('div');
+  dot.className = 'supp-dot';
+  dot.style.background = supp.color || 'var(--text3)';
+
+  const info = document.createElement('div');
+  info.className = 'supp-info';
+
+  const name = document.createElement('div');
+  name.className = 'supp-name';
+  name.style.textDecoration = checked ? 'line-through' : 'none';
+  name.style.color = checked ? 'var(--text3)' : 'var(--text)';
+  name.textContent = supp.name;
+
+  const detail = document.createElement('div');
+  detail.className = 'supp-detail';
+  detail.textContent = supp.note || supp.detail || '';
+
+  info.appendChild(name);
+  info.appendChild(detail);
+
+  const dose = document.createElement('div');
+  dose.className = 'supp-dose';
+  dose.textContent = supp.dose;
+
+  item.appendChild(checkDiv);
+  item.appendChild(dot);
+  item.appendChild(info);
+  item.appendChild(dose);
+
+  return item;
+}
+
+function renderSuppSection(elId, time, isDoseDay) {
+  const el = document.getElementById(elId);
+  el.innerHTML = '';
+  const items = SUPPLEMENTS.filter(s => s.time === time && !(isDoseDay && s.doseDayExclude));
+  items.forEach(s => el.appendChild(createSuppItem(s, time)));
+}
+
+function toggleSupp(id, name) {
+  const log = getLog(todayKey());
+  log.checked[id] = !log.checked[id];
+  saveState();
+
+  const checkEl = document.getElementById(`check-${id}`);
+  const nameEl = document.querySelector(`#supp-${id} .supp-name`);
+
+  if (checkEl) {
+    checkEl.classList.toggle('checked', log.checked[id]);
+    if (nameEl) {
+      nameEl.style.textDecoration = log.checked[id] ? 'line-through' : 'none';
+      nameEl.style.color = log.checked[id] ? 'var(--text3)' : 'var(--text)';
+    }
+  }
+
+  updateProgress();
+  if (log.checked[id]) showToast(`${name} logged ✓`);
+}
+
+function updateProgress() {
+  const log = getLog(todayKey());
+  const total = SUPPLEMENTS.filter(s => s.time !== 'dose-only' && s.time !== 'situational').length + 2;
+  const checked = Object.values(log.checked).filter(Boolean).length;
+  const pct = total > 0 ? Math.round((checked / total) * 100) : 0;
+  document.getElementById('progress-bar').style.width = `${pct}%`;
+  document.getElementById('progress-label').textContent = `${checked} / ${total}`;
+}
+
+function renderMoodAndSymptoms() {
+  const log = getLog(todayKey());
+  if (log.mood) {
+    document.querySelectorAll('.mood-btn').forEach((btn, i) => {
+      btn.classList.toggle('active', i + 1 === log.mood);
+    });
+  }
+  log.symptoms.forEach(s => {
+    document.querySelectorAll('.symptom-btn').forEach(btn => {
+      if (btn.textContent.toLowerCase() === s) btn.classList.add('active');
+    });
+  });
+  const notesEl = document.getElementById('notes-input');
+  if (notesEl) notesEl.value = log.notes || '';
+
+  const cafEl = document.getElementById('caffeine-count');
+  if (cafEl) cafEl.textContent = log.caffeine || 0;
+
+  const exBtn = document.getElementById('exercise-toggle');
+  const exNote = document.getElementById('exercise-note');
+  if (exBtn && log.exercise) {
+    exBtn.textContent = log.exercise.done ? 'Yes ✓' : 'No';
+    exBtn.style.color = log.exercise.done ? 'var(--green)' : 'var(--text3)';
+    exBtn.style.borderColor = log.exercise.done ? 'var(--green-border)' : '';
+    if (exNote) {
+      exNote.style.display = log.exercise.done ? 'block' : 'none';
+      exNote.value = log.exercise.note || '';
+    }
+  }
+}
+
+function setMood(val) {
+  const log = getLog(todayKey());
+  log.mood = val;
+  saveState();
+  document.querySelectorAll('.mood-btn').forEach((btn, i) => {
+    btn.classList.toggle('active', i + 1 === val);
+  });
+  showToast('Mood logged');
+}
+
+function toggleSymptom(sym) {
+  const log = getLog(todayKey());
+  const idx = log.symptoms.indexOf(sym);
+  if (idx > -1) log.symptoms.splice(idx, 1);
+  else log.symptoms.push(sym);
+  saveState();
+  document.querySelectorAll('.symptom-btn').forEach(btn => {
+    if (btn.textContent.toLowerCase() === sym) btn.classList.toggle('active', log.symptoms.includes(sym));
+  });
+}
+
+function saveNotes() {
+  const log = getLog(todayKey());
+  log.notes = document.getElementById('notes-input').value;
+  saveState();
+}
+
+function adjustCaffeine(delta) {
+  const log = getLog(todayKey());
+  log.caffeine = Math.max(0, (log.caffeine || 0) + delta);
+  saveState();
+  document.getElementById('caffeine-count').textContent = log.caffeine;
+}
+
+function toggleExercise() {
+  const log = getLog(todayKey());
+  log.exercise.done = !log.exercise.done;
+  saveState();
+  const btn = document.getElementById('exercise-toggle');
+  const noteEl = document.getElementById('exercise-note');
+  btn.textContent = log.exercise.done ? 'Yes ✓' : 'No';
+  btn.style.color = log.exercise.done ? 'var(--green)' : 'var(--text3)';
+  btn.style.borderColor = log.exercise.done ? 'var(--green-border)' : '';
+  noteEl.style.display = log.exercise.done ? 'block' : 'none';
+}
+
+function saveExerciseNote() {
+  const log = getLog(todayKey());
+  log.exercise.note = document.getElementById('exercise-note').value;
+  saveState();
+}
+
+// ============================================================
+// GOING OUT SCREEN
+// ============================================================
+
+let currentSituation = 'social';
+
+function setSituation(key) {
+  currentSituation = key;
+  document.querySelectorAll('[id^="sit-"]').forEach(btn => {
+    btn.className = 'btn btn-secondary';
+  });
+  const activeBtn = document.getElementById(`sit-${key}`);
+  if (activeBtn) activeBtn.className = 'btn btn-primary';
+  renderGoOut(key);
+}
+
+function renderGoOut(key) {
+  const sit = SITUATIONS[key];
+  if (!sit) return;
+
+  document.getElementById('go-head').textContent = sit.label + ' Stack';
+  document.getElementById('go-note').textContent = sit.note;
+  const titleEl = document.getElementById('go-title');
+  if (titleEl && sit.title) titleEl.innerHTML = `${sit.title[0]}<br><em>${sit.title[1]}</em>`;
+
+  const goItems = document.getElementById('go-items');
+  goItems.innerHTML = '';
+
+  const extras = sit.items.filter(i => !i.inStack);
+  const inStack = sit.items.filter(i => i.inStack);
+
+  function makeGoItem(item, dimmed) {
+    const el = document.createElement('div');
+    el.className = 'go-item';
+    if (dimmed) el.style.opacity = '0.5';
+    el.onclick = () => el.querySelector('.go-check').classList.toggle('checked');
+    el.innerHTML = `
+      <div class="go-check">
+        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+      </div>
+      <div class="supp-info">
+        <div class="supp-name" style="${dimmed ? 'font-size:13px;' : ''}">${item.name}</div>
+        <div class="supp-detail">${item.time}</div>
+      </div>
+      <div class="supp-dose" style="${dimmed ? 'font-size:12px;' : ''}">${item.dose}</div>
+    `;
+    return el;
+  }
+
+  extras.forEach(item => goItems.appendChild(makeGoItem(item, false)));
+
+  if (inStack.length > 0) {
+    const divider = document.createElement('div');
+    divider.style.cssText = 'padding:10px 16px 4px;font-size:11px;color:var(--text3);letter-spacing:0.06em;text-transform:uppercase;';
+    divider.textContent = 'Already in your daily stack';
+    goItems.appendChild(divider);
+    inStack.forEach(item => goItems.appendChild(makeGoItem(item, true)));
+  }
+
+  // Alcohol status
+  const todayType = getFadimanDay(todayKey());
+  const alcoholEl = document.getElementById('alcohol-status');
+  if (todayType === 'dose') {
+    alcoholEl.textContent = '🚫 No alcohol — dose day';
+    alcoholEl.style.color = 'var(--red)';
+  } else {
+    alcoholEl.textContent = sit.alcohol;
+    alcoholEl.style.color = 'var(--text2)';
+  }
+}
+
+// ============================================================
+// STACK SCREEN (Brands)
+// ============================================================
+
+let stackFilter = 'all';
+
+function filterStack(filter) {
+  stackFilter = filter;
+  ['all','core','bp','micro','lever'].forEach(f => {
+    const btn = document.getElementById(`filter-${f}`);
+    if (btn) btn.className = f === filter ? 'btn btn-primary' : 'btn btn-secondary';
+  });
+  renderStack(filter);
+}
+
+function renderStack(filter) {
+  const list = document.getElementById('stack-list');
+  list.innerHTML = '';
+
+  const filtered = filter === 'all' ? SUPPLEMENTS : SUPPLEMENTS.filter(s => s.tier === filter);
+
+  let totalCost = 0;
+
+  filtered.forEach(supp => {
+    const selectedBrand = state.selectedBrands[supp.id];
+    const brand = selectedBrand !== undefined ? supp.brands[selectedBrand] : null;
+    if (brand) totalCost += brand.cost;
+    else if (supp.brands.length > 0) totalCost += supp.brands[0].cost;
+
+    const item = document.createElement('div');
+    item.className = 'supp-item';
+    item.style.cursor = 'pointer';
+    item.onclick = () => openBrandModal(supp);
+
+    const dot = document.createElement('div');
+    dot.className = 'supp-dot';
+    dot.style.background = supp.color || 'var(--text3)';
+    dot.style.width = '10px';
+    dot.style.height = '10px';
+
+    const info = document.createElement('div');
+    info.className = 'supp-info';
+
+    const nameRow = document.createElement('div');
+    nameRow.style.display = 'flex';
+    nameRow.style.alignItems = 'center';
+    nameRow.style.gap = '6px';
+    nameRow.style.flexWrap = 'wrap';
+
+    const name = document.createElement('div');
+    name.className = 'supp-name';
+    name.textContent = supp.name;
+
+    const tierTag = document.createElement('span');
+    tierTag.className = `tag tag-${supp.tier}`;
+    tierTag.textContent = supp.tier;
+
+    nameRow.appendChild(name);
+    nameRow.appendChild(tierTag);
+
+    const detail = document.createElement('div');
+    detail.className = 'supp-detail';
+    detail.textContent = brand ? `${brand.name} · $${brand.cost}/mo` : `Tap to select brand`;
+
+    info.appendChild(nameRow);
+    info.appendChild(detail);
+
+    const arrow = document.createElement('div');
+    arrow.style.color = 'var(--text3)';
+    arrow.style.fontSize = '16px';
+    arrow.textContent = '›';
+
+    item.appendChild(dot);
+    item.appendChild(info);
+    item.appendChild(arrow);
+    list.appendChild(item);
+
+    const divider = document.createElement('div');
+    divider.className = 'divider';
+    list.appendChild(divider);
+  });
+
+  // Remove last divider
+  if (list.lastChild && list.lastChild.className === 'divider') list.removeChild(list.lastChild);
+
+  document.getElementById('monthly-cost').textContent = `~$${totalCost}/mo`;
+}
+
+function openBrandModal(supp) {
+  document.getElementById('brand-modal-title').textContent = supp.name;
+  const opts = document.getElementById('brand-options');
+  opts.innerHTML = '';
+
+  supp.brands.forEach((brand, i) => {
+    const isSelected = (state.selectedBrands[supp.id] ?? 0) === i;
+    const item = document.createElement('div');
+    item.className = `brand-item${isSelected ? ' selected' : ''}`;
+    item.onclick = () => {
+      state.selectedBrands[supp.id] = i;
+      saveState();
+      closeModal('modal-brand');
+      renderStack(stackFilter);
+      showToast(`${brand.name} selected`);
+    };
+
+    item.innerHTML = `
+      <div class="brand-name">
+        ${brand.name}
+        ${isSelected ? '<span style="color:var(--green);font-size:16px;">✓</span>' : ''}
+      </div>
+      <div class="brand-meta">
+        <span style="color:var(--green);font-size:12px;">+ ${brand.pros}</span><br>
+        ${brand.cons ? `<span style="color:var(--text3);font-size:12px;">- ${brand.cons}</span>` : ''}
+      </div>
+      <div class="brand-cost">~$${brand.cost}/month</div>
+    `;
+    opts.appendChild(item);
+  });
+
+  openModal('modal-brand');
+}
+
+// ============================================================
+// SETTINGS / MICRODOSE
+// ============================================================
+
+function renderSettings() {
+  const nameEl = document.getElementById('settings-name');
+  if (nameEl) nameEl.value = state.name || '';
+
+  const heightEl = document.getElementById('settings-height');
+  if (heightEl) heightEl.value = state.height || '';
+
+  const twEl = document.getElementById('settings-target-weight');
+  if (twEl) twEl.value = state.targetWeight || '';
+
+  const fadEl = document.getElementById('fadiman-date-input');
+  if (fadEl && state.fadimanStart) fadEl.value = state.fadimanStart;
+
+  renderMiniCalendar();
+  updateCycleStatus();
+}
+
+function updateFadimanDate() {
+  const val = document.getElementById('fadiman-date-input').value;
+  state.fadimanStart = val;
+  saveState();
+  renderMiniCalendar();
+  updateCycleStatus();
+  renderToday();
+  showToast('Fadiman start date saved');
+}
+
+function shiftFadimanStart(days) {
+  if (!state.fadimanStart) { showToast('Set a start date first'); return; }
+  const d = new Date(state.fadimanStart);
+  d.setDate(d.getDate() + days);
+  state.fadimanStart = d.toISOString().split('T')[0];
+  const fadEl = document.getElementById('fadiman-date-input');
+  if (fadEl) fadEl.value = state.fadimanStart;
+  saveState();
+  renderMiniCalendar();
+  updateCycleStatus();
+  renderToday();
+  showToast(days > 0 ? `Schedule shifted forward ${days} day${days > 1 ? 's' : ''}` : `Schedule shifted back ${Math.abs(days)} day${Math.abs(days) > 1 ? 's' : ''}`);
+}
+
+function resetFadimanToToday() {
+  const today = todayKey();
+  state.fadimanStart = today;
+  const fadEl = document.getElementById('fadiman-date-input');
+  if (fadEl) fadEl.value = today;
+  saveState();
+  renderMiniCalendar();
+  updateCycleStatus();
+  renderToday();
+  showToast('Today is now a dose day');
+}
+
+function updateCycleStatus() {
+  const el = document.getElementById('cycle-status-display');
+  const daysEl = document.getElementById('days-in-cycle');
+  if (!state.fadimanStart) {
+    if (el) el.innerHTML = '<span style="font-size:13px;color:var(--text3);">No start date set</span>';
+    if (daysEl) daysEl.textContent = '—';
+    return;
+  }
+
+  const todayType = getFadimanDay(todayKey());
+  const start = new Date(state.fadimanStart);
+  const now = new Date();
+  start.setHours(0,0,0,0);
+  now.setHours(0,0,0,0);
+  const days = Math.round((now - start) / 86400000);
+
+  if (daysEl) daysEl.textContent = days >= 0 ? `${days + 1}` : 'Not started';
+
+  if (el) {
+    const colors = { dose: 'var(--green)', transition: 'var(--gold)', rest: 'var(--text2)', break: 'var(--pink)' };
+    el.innerHTML = `<div class="day-pill ${todayType || 'notset'}" style="font-size:12px;">Today: ${getDayTypeLabel(todayType)}</div>`;
+  }
+}
+
+function renderMiniCalendar() {
+  const cal = document.getElementById('mini-calendar');
+  if (!cal) return;
+  cal.innerHTML = '';
+
+  if (!state.fadimanStart) return;
+
+  const today = new Date();
+  const startOfWeek = new Date(today);
+  startOfWeek.setDate(today.getDate() - today.getDay());
+
+  for (let i = 0; i < 28; i++) {
+    const d = new Date(startOfWeek);
+    d.setDate(startOfWeek.getDate() + i);
+    const key = d.toISOString().split('T')[0];
+    const type = getFadimanDay(key);
+    const isToday = key === todayKey();
+
+    const cell = document.createElement('div');
+    cell.style.cssText = `
+      aspect-ratio:1;display:flex;align-items:center;justify-content:center;
+      border-radius:6px;font-family:'DM Mono',monospace;font-size:10px;font-weight:500;
+      border:${isToday ? '2px solid var(--text)' : '0.5px solid var(--border)'};
+      cursor:default;
+    `;
+
+    const colors = {
+      dose: { bg: 'var(--green-bg)', color: 'var(--green)' },
+      transition: { bg: 'var(--gold-bg)', color: 'var(--gold)' },
+      rest: { bg: 'var(--surface2)', color: 'var(--text3)' },
+      break: { bg: 'var(--pink-bg)', color: 'var(--pink)' }
+    };
+
+    const c = colors[type] || { bg: 'var(--surface)', color: 'var(--text3)' };
+    cell.style.background = c.bg;
+    cell.style.color = c.color;
+    cell.textContent = d.getDate();
+    cal.appendChild(cell);
+  }
+}
+
+function saveSetting(key, val) {
+  state[key] = val;
+  saveState();
+}
+
+// ============================================================
+// TRACK SCREEN
+// ============================================================
+
+function renderTrack() {
+  renderInsights();
+  renderBPList();
+  renderWeightList();
+  renderFoodList();
+  renderHistory();
+}
+
+function renderWeightList() {
+  const list = document.getElementById('weight-list');
+  const display = document.getElementById('current-weight-display');
+  const chart = document.getElementById('weight-chart');
+
+  if (!state.weightLog || state.weightLog.length === 0) {
+    list.innerHTML = '<div class="empty-state" style="padding:20px;"><div class="empty-state-text" style="font-size:13px;">No weight logged yet</div></div>';
+    display.textContent = '— lbs';
+    chart.innerHTML = '';
+    return;
+  }
+
+  const sorted = [...state.weightLog].sort((a, b) => new Date(b.date) - new Date(a.date));
+  display.textContent = `${sorted[0].weight} lbs`;
+
+  // Mini chart
+  const last7 = sorted.slice(0, 7).reverse();
+  const weights = last7.map(e => e.weight);
+  const min = Math.min(...weights) - 2;
+  const max = Math.max(...weights) + 2;
+  chart.innerHTML = '';
+  last7.forEach(entry => {
+    const pct = ((entry.weight - min) / (max - min)) * 100;
+    const bar = document.createElement('div');
+    bar.className = 'mini-bar filled';
+    bar.style.height = `${Math.max(pct, 5)}%`;
+    bar.title = `${entry.weight} lbs`;
+    chart.appendChild(bar);
+  });
+
+  // List (last 5)
+  list.innerHTML = '';
+  sorted.slice(0, 5).forEach((entry, i) => {
+    const prev = sorted[i + 1];
+    const delta = prev ? (entry.weight - prev.weight).toFixed(1) : null;
+    const deltaClass = delta === null ? 'same' : delta > 0 ? 'up' : delta < 0 ? 'down' : 'same';
+    const deltaStr = delta === null ? '' : delta > 0 ? `+${delta}` : `${delta}`;
+
+    const el = document.createElement('div');
+    el.className = 'weight-entry';
+    el.innerHTML = `
+      <div class="weight-date">${new Date(entry.date + 'T12:00:00').toLocaleDateString('en-US', { month:'short', day:'numeric' })}</div>
+      <div class="weight-val">${entry.weight} lbs</div>
+      ${delta !== null ? `<div class="weight-delta ${deltaClass}">${deltaStr}</div>` : ''}
+      <button class="food-del" onclick="deleteWeight('${entry.id}')">×</button>
+    `;
+    list.appendChild(el);
+  });
+}
+
+function openWeightModal() {
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('weight-date-input').value = today;
+  document.getElementById('weight-input').value = '';
+  openModal('modal-weight');
+  setTimeout(() => document.getElementById('weight-input').focus(), 300);
+}
+
+function saveWeight() {
+  const val = parseFloat(document.getElementById('weight-input').value);
+  const date = document.getElementById('weight-date-input').value;
+  if (!val || !date) { showToast('Enter weight and date'); return; }
+  if (!state.weightLog) state.weightLog = [];
+  state.weightLog.push({ id: Date.now().toString(), weight: val, date });
+  saveState();
+  closeModal('modal-weight');
+  renderWeightList();
+  showToast(`${val} lbs logged`);
+}
+
+function deleteWeight(id) {
+  state.weightLog = state.weightLog.filter(e => e.id !== id);
+  saveState();
+  renderWeightList();
+}
+
+function renderBPList() {
+  const list = document.getElementById('bp-list');
+  const display = document.getElementById('bp-display');
+  const dateEl = document.getElementById('bp-date');
+  const chart = document.getElementById('bp-chart');
+  const log = (state.bpLog || []).sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  if (!log.length) {
+    list.innerHTML = '<div class="empty-state" style="padding:20px;"><div class="empty-state-text" style="font-size:13px;">No BP logged yet</div></div>';
+    display.textContent = '—/—';
+    display.style.color = 'var(--text)';
+    if (dateEl) dateEl.textContent = '';
+    if (chart) chart.innerHTML = '';
+    return;
+  }
+
+  const latest = log[0];
+  display.textContent = `${latest.systolic}/${latest.diastolic}`;
+  // Color-code by systolic: <120 good, 120-129 elevated, 130-139 stage1, ≥140 stage2
+  const s = latest.systolic;
+  display.style.color = s < 120 ? 'var(--green)' : s < 130 ? 'var(--text)' : s < 140 ? 'var(--gold)' : 'var(--red)';
+  if (dateEl) dateEl.textContent = new Date(latest.date + 'T12:00:00').toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+
+  // Mini chart (systolic only, last 10)
+  if (chart) {
+    const last10 = log.slice(0, 10).reverse();
+    const systolics = last10.map(e => e.systolic);
+    const min = Math.min(...systolics, 100) - 5;
+    const max = Math.max(...systolics, 140) + 5;
+    chart.innerHTML = '';
+    last10.forEach(entry => {
+      const pct = ((entry.systolic - min) / (max - min)) * 100;
+      const bar = document.createElement('div');
+      bar.className = 'mini-bar filled';
+      const s = entry.systolic;
+      bar.style.height = `${Math.max(pct, 5)}%`;
+      bar.style.background = s < 120 ? 'var(--green)' : s < 130 ? 'var(--text2)' : s < 140 ? 'var(--gold)' : 'var(--red)';
+      bar.title = `${entry.systolic}/${entry.diastolic}`;
+      chart.appendChild(bar);
+    });
+  }
+
+  // List (last 5)
+  list.innerHTML = '';
+  log.slice(0, 5).forEach((entry, i) => {
+    const prev = log[i + 1];
+    const delta = prev ? entry.systolic - prev.systolic : null;
+    const deltaStr = delta === null ? '' : delta > 0 ? `+${delta}` : `${delta}`;
+    const deltaClass = delta === null ? '' : delta > 0 ? 'up' : delta < 0 ? 'down' : 'same';
+    const el = document.createElement('div');
+    el.className = 'weight-entry';
+    el.innerHTML = `
+      <div class="weight-date">${new Date(entry.date + 'T12:00:00').toLocaleDateString('en-US', { month:'short', day:'numeric' })}</div>
+      <div class="weight-val" style="font-size:15px;">${entry.systolic}/${entry.diastolic}</div>
+      ${delta !== null ? `<div class="weight-delta ${deltaClass}" style="font-size:12px;">${deltaStr}</div>` : ''}
+      <button class="food-del" onclick="deleteBP('${entry.id}')">×</button>
+    `;
+    list.appendChild(el);
+  });
+}
+
+function openBPModal() {
+  document.getElementById('bp-date-input').value = todayKey();
+  document.getElementById('bp-systolic-input').value = '';
+  document.getElementById('bp-diastolic-input').value = '';
+  openModal('modal-bp');
+  setTimeout(() => document.getElementById('bp-systolic-input').focus(), 300);
+}
+
+function saveBP() {
+  const sys = parseInt(document.getElementById('bp-systolic-input').value);
+  const dia = parseInt(document.getElementById('bp-diastolic-input').value);
+  const date = document.getElementById('bp-date-input').value;
+  if (!sys || !dia || !date) { showToast('Enter systolic, diastolic, and date'); return; }
+  if (!state.bpLog) state.bpLog = [];
+  state.bpLog.push({ id: Date.now().toString(), systolic: sys, diastolic: dia, date });
+  saveState();
+  closeModal('modal-bp');
+  renderBPList();
+  renderInsights();
+  showToast(`${sys}/${dia} mmHg logged`);
+}
+
+function deleteBP(id) {
+  state.bpLog = state.bpLog.filter(e => e.id !== id);
+  saveState();
+  renderBPList();
+  renderInsights();
+}
+
+function renderFoodList() {
+  const list = document.getElementById('food-list');
+  const todayFood = (state.foodLog || []).filter(e => e.date === todayKey());
+
+  if (todayFood.length === 0) {
+    list.innerHTML = '<div class="empty-state" style="padding:24px;"><div class="empty-state-text" style="font-size:13px;">No food logged yet today</div></div>';
+    return;
+  }
+
+  list.innerHTML = '';
+  todayFood.forEach(entry => {
+    const el = document.createElement('div');
+    el.className = 'food-entry';
+    el.innerHTML = `
+      <div>
+        <div class="food-name">${entry.food}</div>
+        <div style="font-size:12px;color:var(--text3);">${entry.type}</div>
+      </div>
+      <button class="food-del" onclick="deleteFood('${entry.id}')">×</button>
+    `;
+    list.appendChild(el);
+  });
+}
+
+function openFoodModal() {
+  document.getElementById('food-input').value = '';
+  openModal('modal-food');
+  setTimeout(() => document.getElementById('food-input').focus(), 300);
+}
+
+function saveFood() {
+  const food = document.getElementById('food-input').value.trim();
+  const type = document.getElementById('food-type-input').value;
+  if (!food) { showToast('Enter what you ate'); return; }
+  if (!state.foodLog) state.foodLog = [];
+  state.foodLog.push({ id: Date.now().toString(), food, type, date: todayKey() });
+  saveState();
+  closeModal('modal-food');
+  renderFoodList();
+  showToast('Food logged');
+}
+
+function deleteFood(id) {
+  state.foodLog = state.foodLog.filter(e => e.id !== id);
+  saveState();
+  renderFoodList();
+}
+
+function renderHistory() {
+  const list = document.getElementById('history-list');
+  const keys = Object.keys(state.logs).sort((a, b) => new Date(b) - new Date(a)).slice(0, 7);
+
+  if (keys.length === 0) {
+    list.innerHTML = '<div class="empty-state" style="padding:24px;"><div class="empty-state-text" style="font-size:13px;">Start logging to see history</div></div>';
+    return;
+  }
+
+  const suppTotal = SUPPLEMENTS.filter(s => s.time !== 'dose-only' && s.time !== 'situational').length + 2;
+  list.innerHTML = '';
+
+  keys.forEach((key, idx) => {
+    const log = state.logs[key];
+    const checked = Object.values(log.checked || {}).filter(Boolean).length;
+    const pct = suppTotal > 0 ? Math.round((checked / suppTotal) * 100) : 0;
+    const mood = log.mood;
+    const moodEmoji = ['', '😣', '😐', '🙂', '😄', '🤩'][mood] || '';
+    const symptoms = log.symptoms || [];
+    const type = getFadimanDay(key);
+    const caffeine = log.caffeine || 0;
+    const exercise = log.exercise || {};
+    const weightEntry = (state.weightLog || []).filter(e => e.date === key).slice(-1)[0];
+    const bpEntry = (state.bpLog || []).filter(e => e.date === key).slice(-1)[0];
+    const foodEntries = (state.foodLog || []).filter(e => e.date === key);
+    const dateLabel = new Date(key + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+
+    const el = document.createElement('div');
+    el.style.cssText = `padding:14px 16px;${idx < keys.length - 1 ? 'border-bottom:0.5px solid var(--border);' : ''}`;
+
+    // Supplement bar
+    const barColor = pct >= 80 ? 'var(--green)' : pct >= 50 ? 'var(--gold)' : 'var(--red)';
+
+    // Build detail rows
+    let details = '';
+    if (symptoms.length) details += `<div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:4px;">${symptoms.map(s => `<span style="font-size:11px;background:var(--surface2);border:0.5px solid var(--border2);border-radius:4px;padding:2px 6px;color:var(--text2);">${s}</span>`).join('')}</div>`;
+
+    let stats = [];
+    if (caffeine) stats.push(`☕ ${caffeine}`);
+    if (exercise.done) stats.push(`🏃 ${exercise.note || 'Trained'}`);
+    if (weightEntry) stats.push(`⚖️ ${weightEntry.weight} lbs`);
+    if (bpEntry) stats.push(`🫀 ${bpEntry.systolic}/${bpEntry.diastolic}`);
+    if (foodEntries.length) stats.push(`🍽 ${foodEntries.length} food log${foodEntries.length > 1 ? 's' : ''}`);
+    if (stats.length) details += `<div style="margin-top:6px;font-size:12px;color:var(--text2);">${stats.join(' · ')}</div>`;
+
+    if (log.notes) details += `<div style="margin-top:5px;font-size:12px;color:var(--text3);font-style:italic;">"${log.notes}"</div>`;
+
+    el.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text3);">${dateLabel}</div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          ${type ? `<div class="day-pill ${type}" style="padding:2px 8px;font-size:9px;">${getDayTypeLabel(type)}</div>` : ''}
+          ${moodEmoji ? `<span style="font-size:15px;">${moodEmoji}</span>` : ''}
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div style="flex:1;height:4px;background:var(--surface2);border-radius:2px;">
+          <div style="width:${pct}%;height:100%;background:${barColor};border-radius:2px;transition:width 0.3s;"></div>
+        </div>
+        <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text3);white-space:nowrap;">${checked}/${suppTotal} taken</span>
+      </div>
+      ${details}
+    `;
+    list.appendChild(el);
+  });
+}
+
+// ============================================================
+// INSIGHTS
+// ============================================================
+
+function avg(arr) {
+  return arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
+}
+
+function generateInsights() {
+  const today = todayKey();
+  const suppTotal = SUPPLEMENTS.filter(s => s.time !== 'dose-only' && s.time !== 'situational').length + 2;
+  const allKeys = Object.keys(state.logs).sort((a, b) => new Date(b) - new Date(a)).filter(k => k <= today);
+  const last14 = allKeys.slice(0, 14);
+  const last7 = allKeys.slice(0, 7);
+
+  if (last7.length < 3) return [{ text: 'Keep logging — insights appear after a few days of data.', type: 'neutral' }];
+
+  const insights = [];
+
+  // 1. Dose day mood vs other days
+  const doseDayMoods = last14.filter(k => getFadimanDay(k) === 'dose' && state.logs[k].mood).map(k => state.logs[k].mood);
+  const otherDayMoods = last14.filter(k => ['transition','rest'].includes(getFadimanDay(k)) && state.logs[k].mood).map(k => state.logs[k].mood);
+  if (doseDayMoods.length >= 2 && otherDayMoods.length >= 2) {
+    const doseAvg = avg(doseDayMoods), otherAvg = avg(otherDayMoods);
+    if (doseAvg > otherAvg + 0.5) insights.push({ text: `Mood averages ${doseAvg.toFixed(1)}/5 on dose days vs ${otherAvg.toFixed(1)} on off-days. Stamets Stack correlating with better days.`, type: 'positive' });
+    else if (otherAvg > doseAvg + 0.5) insights.push({ text: `Mood is higher on non-dose days (${otherAvg.toFixed(1)} vs ${doseAvg.toFixed(1)}). Could be dose still calibrating or stimulant load.`, type: 'warning' });
+  }
+
+  // 2. Weight trend
+  const wEntries = (state.weightLog || []).filter(e => e.date <= today).sort((a, b) => new Date(a.date) - new Date(b.date));
+  if (wEntries.length >= 4) {
+    const recent = avg(wEntries.slice(-2).map(e => e.weight));
+    const older = avg(wEntries.slice(0, -2).map(e => e.weight));
+    const diff = recent - older;
+    if (diff < -0.4) insights.push({ text: `Weight trending down — ${Math.abs(diff).toFixed(1)} lbs over last ${wEntries.length} entries. BP protocol working.`, type: 'positive' });
+    else if (diff > 0.4) insights.push({ text: `Weight up ${diff.toFixed(1)} lbs over ${wEntries.length} entries. Check sodium intake and Zone 2 frequency.`, type: 'warning' });
+    else insights.push({ text: `Weight holding steady at ~${recent.toFixed(1)} lbs.`, type: 'neutral' });
+  }
+
+  // 3. Exercise frequency
+  const trainedDays = last7.filter(k => state.logs[k].exercise?.done);
+  if (trainedDays.length === 0) {
+    insights.push({ text: 'No exercise logged this week. Zone 2 cardio is your #2 BP lever after medication.', type: 'warning' });
+  } else if (trainedDays.length >= 4) {
+    insights.push({ text: `${trainedDays.length} training days this week. Zone 2 consistency is your biggest BP mover.`, type: 'positive' });
+  } else {
+    const lastTrained = trainedDays[0];
+    const daysSince = Math.round((new Date(today) - new Date(lastTrained)) / 86400000);
+    if (daysSince >= 3) insights.push({ text: `${daysSince} days since last training session. Aim for 4–5x/week Zone 2.`, type: 'neutral' });
+  }
+
+  // 4. Supplement completion
+  const completionRates = last7.map(k => Object.values(state.logs[k].checked || {}).filter(Boolean).length / suppTotal);
+  const avgComp = avg(completionRates);
+  if (avgComp < 0.6) insights.push({ text: `Stack completion averaging ${Math.round(avgComp * 100)}% this week. Below 60% limits effectiveness — especially BP supplements.`, type: 'warning' });
+  else if (avgComp >= 0.9) insights.push({ text: `${Math.round(avgComp * 100)}% supplement completion this week. Excellent consistency.`, type: 'positive' });
+
+  // 5. Caffeine → anxiety correlation
+  const highCafAnxiety = last14.filter(k => (state.logs[k].caffeine || 0) >= 3 && (state.logs[k].symptoms || []).includes('anxiety'));
+  if (highCafAnxiety.length >= 2) insights.push({ text: `Anxiety logged on ${highCafAnxiety.length} high-caffeine days (3+). L-Theanine ratio may need adjusting on those days.`, type: 'warning' });
+
+  // 6. BP trend
+  const bpEntries = (state.bpLog || []).sort((a, b) => new Date(a.date) - new Date(b.date));
+  if (bpEntries.length >= 2) {
+    const latest = bpEntries[bpEntries.length - 1];
+    const daysSinceReading = Math.round((new Date(today) - new Date(latest.date)) / 86400000);
+    if (daysSinceReading >= 3) {
+      insights.push({ text: `No BP reading in ${daysSinceReading} days. Regular tracking is essential while titrating your stack.`, type: 'warning' });
+    } else if (bpEntries.length >= 4) {
+      const recentSys = avg(bpEntries.slice(-3).map(e => e.systolic));
+      const olderSys = avg(bpEntries.slice(0, -3).map(e => e.systolic));
+      const diff = recentSys - olderSys;
+      if (diff < -3) insights.push({ text: `Systolic trending down ${Math.abs(diff).toFixed(0)} mmHg. Stack + lifestyle protocol is working.`, type: 'positive' });
+      else if (diff > 3) insights.push({ text: `Systolic up ${diff.toFixed(0)} mmHg recently. Review sodium, Zone 2 frequency, and Citrulline dosing.`, type: 'warning' });
+      else if (latest.systolic < 130) insights.push({ text: `Latest BP ${latest.systolic}/${latest.diastolic} — in Stage 1 control range. Keep the protocol consistent.`, type: 'positive' });
+    }
+  } else if (bpEntries.length === 0) {
+    insights.push({ text: 'Start logging BP to track your protocol\'s effect. Aim to read at the same time daily.', type: 'neutral' });
+  }
+
+  // Most skipped BP supplement
+  const bpSupps = SUPPLEMENTS.filter(s => s.tier === 'bp' && s.time !== 'situational' && s.time !== 'dose-only');
+  if (last7.length >= 3 && bpSupps.length) {
+    const worstBP = bpSupps.map(s => ({
+      name: s.name,
+      skipRate: last7.filter(k => !state.logs[k].checked?.[s.id]).length / last7.length
+    })).sort((a, b) => b.skipRate - a.skipRate)[0];
+    if (worstBP.skipRate >= 0.5) insights.push({ text: `${worstBP.name} skipped ${Math.round(worstBP.skipRate * 100)}% of days — your weakest BP stack link.`, type: 'warning' });
+  }
+
+  // 7. Mood vs completion correlation
+  if (last7.length >= 4) {
+    const highComp = last7.filter(k => Object.values(state.logs[k].checked || {}).filter(Boolean).length / suppTotal >= 0.8 && state.logs[k].mood);
+    const lowComp = last7.filter(k => Object.values(state.logs[k].checked || {}).filter(Boolean).length / suppTotal < 0.8 && state.logs[k].mood);
+    if (highComp.length >= 2 && lowComp.length >= 2) {
+      const hMood = avg(highComp.map(k => state.logs[k].mood));
+      const lMood = avg(lowComp.map(k => state.logs[k].mood));
+      if (hMood > lMood + 0.7) insights.push({ text: `Mood averages ${hMood.toFixed(1)} on high-completion days vs ${lMood.toFixed(1)} on low. Consistency is measurably affecting how you feel.`, type: 'positive' });
+    }
+  }
+
+  return insights.length ? insights.slice(0, 5) : [{ text: 'Data looks balanced — no strong patterns yet. Keep logging.', type: 'neutral' }];
+}
+
+function renderInsights() {
+  const list = document.getElementById('insights-list');
+  if (!list) return;
+  const insights = generateInsights();
+  const colors = { positive: 'var(--green)', warning: 'var(--gold)', neutral: 'var(--text3)' };
+  list.innerHTML = insights.map((ins, i) => `
+    <div style="display:flex;gap:12px;padding:11px 16px;${i < insights.length - 1 ? 'border-bottom:0.5px solid var(--border);' : ''}">
+      <div style="width:3px;border-radius:2px;background:${colors[ins.type]};flex-shrink:0;margin:2px 0;"></div>
+      <div style="font-size:13px;color:var(--text2);line-height:1.5;">${ins.text}</div>
+    </div>
+  `).join('');
+}
+
+// ============================================================
+// FOOD SCREEN
+// ============================================================
+
+const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const DAY_KEYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+
+function renderFood() {
+  renderDietGoals();
+  renderWeeklyPlan();
+  const prepEl = document.getElementById('prep-notes-input');
+  if (prepEl) prepEl.value = state.prepNotes || '';
+}
+
+function renderDietGoals() {
+  const list = document.getElementById('diet-goals-list');
+  const empty = document.getElementById('diet-goals-empty');
+  if (!list) return;
+  list.innerHTML = '';
+  const goals = state.dietGoals || [];
+  if (goals.length === 0) {
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+  goals.forEach((goal, i) => {
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:10px 16px;border-top:0.5px solid var(--border);';
+    row.innerHTML = `
+      <div style="width:6px;height:6px;border-radius:50%;background:var(--gold);flex-shrink:0;"></div>
+      <input type="text" value="${goal.replace(/"/g, '&quot;')}" oninput="updateDietGoal(${i}, this.value)"
+        style="flex:1;background:transparent;border:none;color:var(--text);font-family:'Instrument Sans',sans-serif;font-size:14px;outline:none;">
+      <button onclick="deleteDietGoal(${i})" style="background:none;border:none;color:var(--text3);font-size:18px;cursor:pointer;padding:0 2px;line-height:1;">×</button>
+    `;
+    list.appendChild(row);
+  });
+}
+
+function addDietGoal() {
+  if (!state.dietGoals) state.dietGoals = [];
+  state.dietGoals.push('');
+  saveState();
+  renderDietGoals();
+  // Focus the new input
+  const inputs = document.querySelectorAll('#diet-goals-list input');
+  if (inputs.length) inputs[inputs.length - 1].focus();
+}
+
+function updateDietGoal(i, val) {
+  state.dietGoals[i] = val;
+  saveState();
+}
+
+function deleteDietGoal(i) {
+  state.dietGoals.splice(i, 1);
+  saveState();
+  renderDietGoals();
+}
+
+function renderWeeklyPlan() {
+  const list = document.getElementById('weekly-plan-list');
+  if (!list) return;
+  list.innerHTML = '';
+  const plan = state.weeklyPlan || {};
+  DAY_KEYS.forEach((key, idx) => {
+    const row = document.createElement('div');
+    row.style.cssText = 'padding:10px 16px;border-top:0.5px solid var(--border);';
+    row.innerHTML = `
+      <div style="font-size:11px;color:var(--text3);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:5px;">${DAYS[idx]}</div>
+      <textarea oninput="saveWeeklyDay('${key}', this.value)" placeholder="Meals, prep notes…"
+        style="width:100%;background:transparent;border:none;color:var(--text);font-family:'Instrument Sans',sans-serif;font-size:13px;line-height:1.5;resize:none;outline:none;min-height:38px;">${(plan[key] || '').replace(/</g, '&lt;')}</textarea>
+    `;
+    // auto-resize textarea
+    const ta = row.querySelector('textarea');
+    ta.addEventListener('input', () => { ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 'px'; });
+    if (plan[key]) { setTimeout(() => { ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 'px'; }, 0); }
+    list.appendChild(row);
+  });
+}
+
+function saveWeeklyDay(key, val) {
+  if (!state.weeklyPlan) state.weeklyPlan = {};
+  state.weeklyPlan[key] = val;
+  saveState();
+}
+
+function savePrepNotes() {
+  state.prepNotes = document.getElementById('prep-notes-input').value;
+  saveState();
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(`screen-${id}`).classList.add('active');
+  document.getElementById(`nav-${id}`).classList.add('active');
+
+  if (id === 'track') renderTrack();
+  if (id === 'settings') renderSettings();
+  if (id === 'stack') renderStack(stackFilter);
+  if (id === 'food') renderFood();
+}
+
+// ============================================================
+// MODALS
+// ============================================================
+
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+// ============================================================
+// TOAST
+// ============================================================
+
+let toastTimeout;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// ============================================================
+// BOOT
+// ============================================================
+
+loadState();
+checkOnboard();
+</script>
+</body>
+</html>
