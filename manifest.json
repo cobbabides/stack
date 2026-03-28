@@ -1,0 +1,19 @@
+{
+  "name": "The Stack",
+  "short_name": "Stack",
+  "description": "Your complete supplement system",
+  "start_url": "/stack/",
+  "scope": "/stack/",
+  "display": "standalone",
+  "background_color": "#f8f7f4",
+  "theme_color": "#f8f7f4",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
