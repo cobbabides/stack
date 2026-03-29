@@ -973,12 +973,26 @@ input:focus, textarea:focus, select:focus {
               <button onclick="adjustCaffeine(1)" style="background:var(--surface2);border:0.5px solid var(--border2);border-radius:6px;width:28px;height:28px;color:var(--text2);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;">+</button>
             </div>
           </div>
-          <div style="display:flex;align-items:flex-start;gap:10px;">
-            <div style="font-size:13px;color:var(--text2);padding-top:2px;white-space:nowrap;">Exercise</div>
-            <div style="flex:1;display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
-              <button id="exercise-toggle" onclick="toggleExercise()" style="background:var(--surface2);border:0.5px solid var(--border2);border-radius:6px;padding:4px 12px;color:var(--text3);font-family:'Instrument Sans',sans-serif;font-size:12px;cursor:pointer;">No</button>
-              <input type="text" id="exercise-note" placeholder="What did you do?" oninput="saveExerciseNote()" style="display:none;width:100%;background:transparent;border:0.5px solid var(--border2);border-radius:6px;padding:6px 10px;color:var(--text);font-family:'Instrument Sans',sans-serif;font-size:13px;outline:none;">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div style="font-size:13px;color:var(--text2);">Exercise</div>
+            <button id="exercise-toggle" onclick="toggleExercise()" style="background:var(--surface2);border:0.5px solid var(--border2);border-radius:6px;padding:4px 12px;color:var(--text3);font-family:'Instrument Sans',sans-serif;font-size:12px;cursor:pointer;">No</button>
+          </div>
+          <div id="exercise-details" style="display:none;margin-top:8px;display:none;flex-direction:column;gap:6px;">
+            <div style="display:flex;gap:8px;">
+              <select id="exercise-type" onchange="saveExerciseType()" style="flex:1;background:var(--surface2);border:0.5px solid var(--border2);border-radius:6px;padding:6px 10px;color:var(--text);font-family:'Instrument Sans',sans-serif;font-size:13px;outline:none;">
+                <option value="zone2">Zone 2 Cardio</option>
+                <option value="strength">Strength</option>
+                <option value="yoga">Yoga</option>
+                <option value="hiit">HIIT</option>
+                <option value="walk">Walk</option>
+                <option value="other">Other</option>
+              </select>
+              <div style="display:flex;align-items:center;gap:6px;background:var(--surface2);border:0.5px solid var(--border2);border-radius:6px;padding:6px 10px;">
+                <input type="number" id="exercise-minutes" placeholder="0" min="0" max="300" oninput="saveExerciseMinutes()" style="width:40px;background:transparent;border:none;color:var(--text);font-family:'DM Mono',monospace;font-size:14px;outline:none;text-align:center;">
+                <span style="font-size:12px;color:var(--text3);">min</span>
+              </div>
             </div>
+            <input type="text" id="exercise-note" placeholder="Notes (optional)" oninput="saveExerciseNote()" style="width:100%;background:transparent;border:0.5px solid var(--border2);border-radius:6px;padding:6px 10px;color:var(--text);font-family:'Instrument Sans',sans-serif;font-size:13px;outline:none;">
           </div>
         </div>
       </div>
@@ -1139,35 +1153,77 @@ input:focus, textarea:focus, select:focus {
       <div class="page-title" style="margin-bottom:16px;">Food &<br><em>Diet</em></div>
     </div>
 
-    <!-- Diet Goals -->
-    <div class="card-section">
-      <div class="card">
-        <div style="padding:14px 16px 10px;display:flex;align-items:center;justify-content:space-between;">
-          <div class="section-head" style="margin:0;">Diet Goals</div>
-          <button class="btn btn-secondary" onclick="addDietGoal()" style="font-size:12px;">+ Add</button>
-        </div>
-        <div id="diet-goals-list"></div>
-        <div id="diet-goals-empty" style="padding:12px 16px 14px;font-size:13px;color:var(--text3);display:none;">No goals set yet — tap + Add</div>
+    <!-- Food tab bar -->
+    <div style="padding:0 20px;margin-bottom:16px;">
+      <div style="display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;">
+        <button id="food-tab-btn-recipes" class="btn btn-primary" onclick="showFoodTab('recipes')" style="white-space:nowrap;font-size:13px;">Recipes</button>
+        <button id="food-tab-btn-plan" class="btn btn-secondary" onclick="showFoodTab('plan')" style="white-space:nowrap;font-size:13px;">This Week</button>
+        <button id="food-tab-btn-goals" class="btn btn-secondary" onclick="showFoodTab('goals')" style="white-space:nowrap;font-size:13px;">Goals</button>
+        <button id="food-tab-btn-prep" class="btn btn-secondary" onclick="showFoodTab('prep')" style="white-space:nowrap;font-size:13px;">Prep & Shop</button>
       </div>
     </div>
 
-    <!-- Weekly Meal Plan -->
-    <div class="card-section" style="margin-top:16px;">
-      <div class="card">
-        <div class="section-head">This Week</div>
-        <div id="weekly-plan-list"></div>
+    <!-- Recipes tab -->
+    <div id="food-tab-recipes">
+      <!-- Ingredient finder -->
+      <div class="card-section" style="margin-bottom:12px;">
+        <div class="card">
+          <div style="padding:12px 16px 10px;">
+            <div style="font-size:13px;color:var(--text2);margin-bottom:8px;">What do you have?</div>
+            <div style="display:flex;gap:8px;margin-bottom:8px;">
+              <input type="text" id="ingredient-input" placeholder="e.g. salmon, garlic, lemon…" onkeydown="handleIngredientKey(event)" style="flex:1;font-size:13px;">
+              <button onclick="addIngredientTag()" class="btn btn-secondary" style="font-size:13px;white-space:nowrap;">+ Add</button>
+            </div>
+            <div id="ingredient-tags" style="display:flex;flex-wrap:wrap;gap:6px;min-height:0;"></div>
+          </div>
+        </div>
+      </div>
+      <!-- Cuisine filter -->
+      <div style="padding:0 20px;margin-bottom:12px;">
+        <div id="cuisine-tabs" style="display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;"></div>
+      </div>
+      <!-- Recipe list -->
+      <div class="card-section" style="margin-bottom:8px;">
+        <div id="recipe-list"></div>
       </div>
     </div>
 
-    <!-- Prep & Shopping Notes -->
-    <div class="card-section" style="margin-top:16px;margin-bottom:8px;">
-      <div class="card">
-        <div class="section-head">Prep & Shopping</div>
-        <div style="padding:10px 16px 14px;">
-          <textarea id="prep-notes-input" placeholder="Meal prep notes, shopping list, batch cooking plans…" oninput="savePrepNotes()" style="width:100%;background:transparent;border:none;color:var(--text);font-family:'Instrument Sans',sans-serif;font-size:14px;line-height:1.6;resize:none;min-height:120px;outline:none;"></textarea>
+    <!-- Plan tab -->
+    <div id="food-tab-plan" style="display:none;">
+      <div class="card-section" style="margin-bottom:8px;">
+        <div class="card">
+          <div class="section-head">This Week</div>
+          <div id="weekly-plan-list"></div>
         </div>
       </div>
     </div>
+
+    <!-- Goals tab -->
+    <div id="food-tab-goals" style="display:none;">
+      <div class="card-section" style="margin-bottom:8px;">
+        <div class="card">
+          <div style="padding:14px 16px 10px;display:flex;align-items:center;justify-content:space-between;">
+            <div class="section-head" style="margin:0;">Diet Goals</div>
+            <button class="btn btn-secondary" onclick="addDietGoal()" style="font-size:12px;">+ Add</button>
+          </div>
+          <div id="diet-goals-list"></div>
+          <div id="diet-goals-empty" style="padding:12px 16px 14px;font-size:13px;color:var(--text3);display:none;">No goals set yet — tap + Add</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Prep tab -->
+    <div id="food-tab-prep" style="display:none;">
+      <div class="card-section" style="margin-bottom:8px;">
+        <div class="card">
+          <div class="section-head">Prep & Shopping</div>
+          <div style="padding:10px 16px 14px;">
+            <textarea id="prep-notes-input" placeholder="Meal prep notes, shopping list, batch cooking plans…" oninput="savePrepNotes()" style="width:100%;background:transparent;border:none;color:var(--text);font-family:'Instrument Sans',sans-serif;font-size:14px;line-height:1.6;resize:none;min-height:160px;outline:none;"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div style="height:8px;"></div>
   </div>
 
@@ -1407,6 +1463,26 @@ input:focus, textarea:focus, select:focus {
   </div>
 </div>
 
+<div class="modal-overlay" id="modal-recipe" onclick="closeModal('modal-recipe')">
+  <div class="modal" onclick="event.stopPropagation()" style="max-height:85vh;overflow-y:auto;">
+    <div class="modal-handle"></div>
+    <div style="padding:16px 20px 0;">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:4px;">
+        <div class="modal-title" style="margin:0;font-size:20px;" id="recipe-modal-name"></div>
+        <div id="recipe-modal-cuisine" style="font-size:11px;color:var(--text3);background:var(--surface2);border:0.5px solid var(--border2);border-radius:4px;padding:3px 8px;white-space:nowrap;margin-top:4px;"></div>
+      </div>
+      <div id="recipe-modal-meta" style="font-size:12px;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:16px;"></div>
+    </div>
+    <div style="padding:0 20px;">
+      <div style="font-size:12px;color:var(--text3);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:8px;">Ingredients</div>
+      <div id="recipe-modal-ingredients" style="margin-bottom:20px;"></div>
+      <div style="font-size:12px;color:var(--text3);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:8px;">Steps</div>
+      <div id="recipe-modal-steps" style="margin-bottom:16px;"></div>
+      <div id="recipe-modal-health" style="background:var(--green-bg);border:0.5px solid var(--green-border);border-radius:var(--radius-sm);padding:10px 12px;font-size:12px;color:var(--green);line-height:1.5;margin-bottom:20px;display:none;"></div>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modal-brand" onclick="closeModal('modal-brand')">
   <div class="modal" onclick="event.stopPropagation()">
     <div class="modal-handle"></div>
@@ -1626,7 +1702,9 @@ function getLog(dateKey) {
   if (!state.logs[dateKey]) state.logs[dateKey] = { checked: {}, mood: null, symptoms: [], notes: '', caffeine: 0, exercise: { done: false, note: '' } };
   const log = state.logs[dateKey];
   if (log.caffeine === undefined) log.caffeine = 0;
-  if (!log.exercise) log.exercise = { done: false, note: '' };
+  if (!log.exercise) log.exercise = { done: false, type: 'zone2', minutes: 0, note: '' };
+  if (log.exercise.type === undefined) log.exercise.type = 'zone2';
+  if (log.exercise.minutes === undefined) log.exercise.minutes = 0;
   return log;
 }
 
@@ -1915,15 +1993,19 @@ function renderMoodAndSymptoms() {
   if (cafEl) cafEl.textContent = log.caffeine || 0;
 
   const exBtn = document.getElementById('exercise-toggle');
-  const exNote = document.getElementById('exercise-note');
+  const exDetails = document.getElementById('exercise-details');
   if (exBtn && log.exercise) {
-    exBtn.textContent = log.exercise.done ? 'Yes ✓' : 'No';
-    exBtn.style.color = log.exercise.done ? 'var(--green)' : 'var(--text3)';
-    exBtn.style.borderColor = log.exercise.done ? 'var(--green-border)' : '';
-    if (exNote) {
-      exNote.style.display = log.exercise.done ? 'block' : 'none';
-      exNote.value = log.exercise.note || '';
-    }
+    const done = log.exercise.done;
+    exBtn.textContent = done ? 'Yes ✓' : 'No';
+    exBtn.style.color = done ? 'var(--green)' : 'var(--text3)';
+    exBtn.style.borderColor = done ? 'var(--green-border)' : '';
+    if (exDetails) exDetails.style.display = done ? 'flex' : 'none';
+    const typeEl = document.getElementById('exercise-type');
+    const minEl = document.getElementById('exercise-minutes');
+    const noteEl = document.getElementById('exercise-note');
+    if (typeEl) typeEl.value = log.exercise.type || 'zone2';
+    if (minEl) minEl.value = log.exercise.minutes || '';
+    if (noteEl) noteEl.value = log.exercise.note || '';
   }
 }
 
@@ -1966,11 +2048,23 @@ function toggleExercise() {
   log.exercise.done = !log.exercise.done;
   saveState();
   const btn = document.getElementById('exercise-toggle');
-  const noteEl = document.getElementById('exercise-note');
+  const details = document.getElementById('exercise-details');
   btn.textContent = log.exercise.done ? 'Yes ✓' : 'No';
   btn.style.color = log.exercise.done ? 'var(--green)' : 'var(--text3)';
   btn.style.borderColor = log.exercise.done ? 'var(--green-border)' : '';
-  noteEl.style.display = log.exercise.done ? 'block' : 'none';
+  details.style.display = log.exercise.done ? 'flex' : 'none';
+}
+
+function saveExerciseType() {
+  const log = getLog(todayKey());
+  log.exercise.type = document.getElementById('exercise-type').value;
+  saveState();
+}
+
+function saveExerciseMinutes() {
+  const log = getLog(todayKey());
+  log.exercise.minutes = parseInt(document.getElementById('exercise-minutes').value) || 0;
+  saveState();
 }
 
 function saveExerciseNote() {
@@ -2564,7 +2658,12 @@ function renderHistory() {
 
     let stats = [];
     if (caffeine) stats.push(`☕ ${caffeine}`);
-    if (exercise.done) stats.push(`🏃 ${exercise.note || 'Trained'}`);
+    if (exercise.done) {
+      const typeLabels = { zone2:'Zone 2', strength:'Strength', yoga:'Yoga', hiit:'HIIT', walk:'Walk', other:'Trained' };
+      const typeLabel = typeLabels[exercise.type] || 'Trained';
+      const mins = exercise.minutes ? ` · ${exercise.minutes}min` : '';
+      stats.push(`🏃 ${typeLabel}${mins}`);
+    }
     if (weightEntry) stats.push(`⚖️ ${weightEntry.weight} lbs`);
     if (bpEntry) stats.push(`🫀 ${bpEntry.systolic}/${bpEntry.diastolic}`);
     if (foodEntries.length) stats.push(`🍽 ${foodEntries.length} food log${foodEntries.length > 1 ? 's' : ''}`);
@@ -2631,16 +2730,20 @@ function generateInsights() {
     else insights.push({ text: `Weight holding steady at ~${recent.toFixed(1)} lbs.`, type: 'neutral' });
   }
 
-  // 3. Exercise frequency
-  const trainedDays = last7.filter(k => state.logs[k].exercise?.done);
-  if (trainedDays.length === 0) {
-    insights.push({ text: 'No exercise logged this week. Zone 2 cardio is your #2 BP lever after medication.', type: 'warning' });
-  } else if (trainedDays.length >= 4) {
-    insights.push({ text: `${trainedDays.length} training days this week. Zone 2 consistency is your biggest BP mover.`, type: 'positive' });
-  } else {
-    const lastTrained = trainedDays[0];
-    const daysSince = Math.round((new Date(today) - new Date(lastTrained)) / 86400000);
-    if (daysSince >= 3) insights.push({ text: `${daysSince} days since last training session. Aim for 4–5x/week Zone 2.`, type: 'neutral' });
+  // 3. Zone 2 minutes this week
+  const zone2Mins = last7.reduce((sum, k) => {
+    const ex = state.logs[k].exercise;
+    return sum + (ex?.done && ex?.type === 'zone2' ? (ex.minutes || 0) : 0);
+  }, 0);
+  const totalTrainDays = last7.filter(k => state.logs[k].exercise?.done).length;
+  if (zone2Mins >= 150) {
+    insights.push({ text: `${zone2Mins} min Zone 2 this week — hit the 150 min target. Top BP lifestyle lever.`, type: 'positive' });
+  } else if (zone2Mins > 0) {
+    insights.push({ text: `${zone2Mins}/150 min Zone 2 this week. Consistent cardio is your #2 BP lever after Amlodipine.`, type: 'neutral' });
+  } else if (totalTrainDays > 0) {
+    insights.push({ text: `${totalTrainDays} training day${totalTrainDays > 1 ? 's' : ''} this week but no Zone 2 logged. Zone 2 cardio is most impactful for BP.`, type: 'neutral' });
+  } else if (last7.length >= 3) {
+    insights.push({ text: 'No exercise logged this week. Zone 2 cardio (30–45 min, conversational pace) is your #2 BP lever.', type: 'warning' });
   }
 
   // 4. Supplement completion
@@ -2715,12 +2818,367 @@ function renderInsights() {
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const DAY_KEYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+const CUISINES = ['All','Mediterranean','Japanese','Korean','Mexican','Indian','Thai','Middle Eastern','American'];
+
+let foodTab = 'recipes';
+let recipeCuisine = 'All';
+let userIngredients = [];
+
+const RECIPES = [
+  // ── MEDITERRANEAN ──────────────────────────────────────────
+  { id:'med1', name:'Baked Greek Salmon', cuisine:'Mediterranean', time:20,
+    ing:['salmon','lemon','olive oil','garlic','oregano','cherry tomatoes'],
+    fullIng:['6 oz salmon fillet','1 lemon','1 tbsp olive oil','2 cloves garlic','1 tsp dried oregano','handful cherry tomatoes'],
+    steps:['Preheat oven to 400°F.','Place salmon on foil-lined baking sheet.','Drizzle olive oil, squeeze half the lemon, season with oregano, salt, pepper.','Add smashed garlic and halved tomatoes around fish.','Bake 14–16 min until salmon flakes easily.','Squeeze remaining lemon over top before serving.'],
+    health:'High EPA/DHA omega-3s. Regular intake linked to 4–5 mmHg systolic reduction.' },
+  { id:'med2', name:'Shakshuka', cuisine:'Mediterranean', time:25,
+    ing:['eggs','canned tomatoes','bell pepper','onion','garlic','cumin','paprika','feta'],
+    fullIng:['4 eggs','1 can crushed tomatoes','1 bell pepper diced','1 onion diced','3 cloves garlic','1 tsp cumin','1 tsp smoked paprika','2 oz feta (optional)'],
+    steps:['Sauté onion and pepper in olive oil 5 min.','Add garlic, cumin, paprika — cook 1 min.','Pour in tomatoes, simmer 10 min, season.','Make 4 wells, crack in eggs.','Cover and cook 5–7 min until whites set.','Top with feta and fresh herbs.'],
+    health:'Lycopene in tomatoes supports vascular health. Potassium-rich.' },
+  { id:'med3', name:'Lemon Herb Chicken & Greens', cuisine:'Mediterranean', time:30,
+    ing:['chicken breast','lemon','olive oil','garlic','spinach','chickpeas','rosemary'],
+    fullIng:['2 chicken breasts','1 lemon','2 tbsp olive oil','3 cloves garlic','3 cups spinach','1 can chickpeas drained','1 tsp rosemary'],
+    steps:['Pound chicken to even thickness. Season with salt, pepper, rosemary.','Sear in olive oil 5–6 min per side.','Rest chicken. In same pan sauté garlic, add chickpeas, wilt spinach.','Deglaze with lemon juice.','Slice chicken, serve over chickpea-spinach mix.'],
+    health:'Lean protein + legumes + greens — textbook DASH plate.' },
+  { id:'med4', name:'White Bean & Kale Soup', cuisine:'Mediterranean', time:30,
+    ing:['white beans','kale','onion','garlic','carrot','olive oil','vegetable broth','rosemary'],
+    fullIng:['2 cans white beans','4 cups kale chopped','1 onion','4 cloves garlic','2 carrots','2 tbsp olive oil','4 cups broth','1 tsp rosemary'],
+    steps:['Sauté onion and carrot in olive oil 5 min.','Add garlic and rosemary, cook 1 min.','Add beans and broth, bring to simmer.','Add kale, cook 10 min. Mash some beans to thicken.','Season and finish with lemon squeeze.'],
+    health:'High potassium and magnesium. Both major BP-lowering minerals.' },
+  { id:'med5', name:'Tuna Niçoise Bowl', cuisine:'Mediterranean', time:15,
+    ing:['tuna','eggs','green beans','cherry tomatoes','olives','lemon','olive oil','dijon mustard'],
+    fullIng:['2 cans good tuna','2 hard-boiled eggs','1 cup green beans blanched','handful cherry tomatoes','¼ cup kalamata olives','1 lemon','2 tbsp olive oil','1 tsp Dijon'],
+    steps:['Whisk lemon juice, olive oil, Dijon for dressing.','Arrange beans, tomatoes, olives, halved eggs in bowls.','Top with tuna.','Drizzle dressing. Season with salt and pepper.'],
+    health:'Omega-3 rich tuna + antioxidant-dense vegetables. No cooking required.' },
+
+  // ── JAPANESE ───────────────────────────────────────────────
+  { id:'jpn1', name:'Miso-Glazed Salmon', cuisine:'Japanese', time:20,
+    ing:['salmon','miso paste','soy sauce','ginger','sesame oil','rice','scallions'],
+    fullIng:['6 oz salmon fillet','2 tbsp white miso','1 tbsp low-sodium soy sauce','1 tsp fresh ginger grated','1 tsp sesame oil','1 cup cooked brown rice','2 scallions'],
+    steps:['Mix miso, soy, ginger, sesame oil into glaze.','Coat salmon, marinate 15 min (or overnight).','Broil 6–8 min until caramelized and cooked through.','Serve over rice, garnish with sliced scallions.'],
+    health:'Miso contains beneficial probiotics. Use low-sodium miso to keep sodium in check.' },
+  { id:'jpn2', name:'Chicken & Veggie Teriyaki Bowl', cuisine:'Japanese', time:25,
+    ing:['chicken thighs','soy sauce','honey','ginger','garlic','broccoli','brown rice','sesame seeds'],
+    fullIng:['4 chicken thighs','3 tbsp low-sodium soy sauce','1 tbsp honey','1 tsp ginger','2 cloves garlic','2 cups broccoli florets','1 cup cooked brown rice','1 tsp sesame seeds'],
+    steps:['Mix soy, honey, ginger, garlic for sauce.','Sear chicken 5 min per side.','Add sauce, simmer 5 min to glaze.','Steam broccoli separately.','Slice chicken over rice, spoon sauce, add broccoli, top with sesame seeds.'],
+    health:'Ginger has mild vasodilatory effects. Broccoli is high in potassium and vitamin C.' },
+  { id:'jpn3', name:'Soba Noodle Salad', cuisine:'Japanese', time:15,
+    ing:['soba noodles','cucumber','edamame','carrot','sesame oil','rice vinegar','soy sauce','scallions'],
+    fullIng:['200g soba noodles','1 cucumber sliced','1 cup edamame shelled','1 carrot julienned','2 tbsp sesame oil','2 tbsp rice vinegar','1 tbsp soy sauce','2 scallions'],
+    steps:['Cook soba per package, rinse under cold water.','Whisk sesame oil, vinegar, soy sauce.','Toss noodles with cucumber, edamame, carrot.','Drizzle dressing, top with scallions.'],
+    health:'Buckwheat soba is high in rutin, shown to strengthen capillary walls and support BP.' },
+  { id:'jpn4', name:'Tofu Miso Soup', cuisine:'Japanese', time:15,
+    ing:['tofu','miso paste','dashi','wakame','scallions','tofu'],
+    fullIng:['300g firm tofu cubed','3 tbsp white miso','4 cups dashi or vegetable broth','¼ cup dried wakame rehydrated','3 scallions sliced'],
+    steps:['Heat dashi to near-boil — do not boil.','Dissolve miso in a ladle of broth, whisk back in.','Add tofu and wakame, heat 2 min.','Serve topped with scallions.'],
+    health:'Low-calorie, high protein. Wakame contains fucoxanthin — anti-inflammatory.' },
+  { id:'jpn5', name:'Edamame & Brown Rice Bowl', cuisine:'Japanese', time:10,
+    ing:['edamame','brown rice','avocado','cucumber','nori','sesame seeds','soy sauce','rice vinegar'],
+    fullIng:['1 cup edamame shelled','1 cup cooked brown rice','½ avocado sliced','½ cucumber','2 nori sheets','1 tbsp sesame seeds','soy sauce and rice vinegar to taste'],
+    steps:['Assemble rice in bowl.','Top with edamame, avocado, cucumber, torn nori.','Drizzle with soy sauce and rice vinegar.','Sprinkle sesame seeds.'],
+    health:'Edamame rich in plant protein and isoflavones — modest BP benefit with regular intake.' },
+
+  // ── KOREAN ─────────────────────────────────────────────────
+  { id:'kor1', name:'Bibimbap', cuisine:'Korean', time:30,
+    ing:['brown rice','spinach','carrot','zucchini','mushrooms','egg','sesame oil','gochujang','garlic'],
+    fullIng:['1 cup cooked brown rice','2 cups spinach sautéed','1 carrot julienned','1 zucchini julienned','1 cup shiitake mushrooms','1 egg','2 tbsp sesame oil','1 tbsp gochujang','2 cloves garlic'],
+    steps:['Sauté each vegetable separately in sesame oil with garlic. Season lightly.','Fry egg sunny-side up.','Arrange vegetables over rice in sections.','Top with egg and a spoonful of gochujang.','Mix together before eating.'],
+    health:'High vegetable diversity = wide micronutrient profile. Capsaicin in gochujang may support circulation.' },
+  { id:'kor2', name:'Korean Chicken Lettuce Wraps', cuisine:'Korean', time:20,
+    ing:['ground chicken','garlic','ginger','soy sauce','sesame oil','gochujang','butter lettuce','scallions','cucumber'],
+    fullIng:['400g ground chicken','3 cloves garlic','1 tsp ginger','2 tbsp low-sodium soy sauce','1 tbsp sesame oil','1 tbsp gochujang','butter lettuce leaves','2 scallions','½ cucumber julienned'],
+    steps:['Cook garlic and ginger in sesame oil 1 min.','Add chicken, cook through breaking up.','Add soy sauce and gochujang, stir to coat.','Serve in lettuce cups topped with scallion and cucumber.'],
+    health:'Low-carb, high-protein. Lettuce wraps keep the meal light and sodium lower than rice dishes.' },
+  { id:'kor3', name:'Doenjang Jjigae', cuisine:'Korean', time:25,
+    ing:['doenjang','tofu','zucchini','mushrooms','onion','garlic','anchovy broth','scallions'],
+    fullIng:['2 tbsp doenjang (Korean soybean paste)','300g firm tofu','1 zucchini cubed','1 cup mushrooms','1 onion','3 cloves garlic','3 cups anchovy or vegetable broth','2 scallions'],
+    steps:['Sauté onion and garlic in a splash of oil.','Add broth and doenjang, whisk to dissolve.','Add zucchini and mushrooms, simmer 10 min.','Add tofu, simmer 5 more min.','Garnish with scallions.'],
+    health:'Fermented doenjang contains beneficial bacteria and isoflavones. Rich umami flavor — naturally filling.' },
+  { id:'kor4', name:'Gochujang Roasted Cauliflower', cuisine:'Korean', time:30,
+    ing:['cauliflower','gochujang','sesame oil','garlic','soy sauce','honey','sesame seeds'],
+    fullIng:['1 head cauliflower cut into florets','2 tbsp gochujang','1 tbsp sesame oil','2 cloves garlic minced','1 tbsp soy sauce','1 tsp honey','1 tbsp sesame seeds'],
+    steps:['Preheat oven to 425°F.','Mix gochujang, sesame oil, garlic, soy, honey into sauce.','Toss cauliflower in sauce.','Roast 25 min, flipping halfway, until charred edges.','Finish with sesame seeds.'],
+    health:'Cruciferous vegetables support liver detox and anti-inflammatory pathways. Excellent fiber.' },
+
+  // ── MEXICAN ────────────────────────────────────────────────
+  { id:'mex1', name:'Black Bean Tacos', cuisine:'Mexican', time:15,
+    ing:['black beans','corn tortillas','avocado','lime','cabbage','salsa','cumin','garlic'],
+    fullIng:['2 cans black beans','6 corn tortillas','1 avocado','2 limes','2 cups shredded cabbage','½ cup salsa','1 tsp cumin','2 cloves garlic'],
+    steps:['Heat beans with garlic and cumin, mash lightly.','Warm tortillas on a dry pan.','Layer beans, cabbage, sliced avocado.','Top with salsa and a squeeze of lime.'],
+    health:'Black beans = high potassium, magnesium, fiber. All critical DASH diet pillars.' },
+  { id:'mex2', name:'Chicken Burrito Bowl', cuisine:'Mexican', time:25,
+    ing:['chicken breast','brown rice','black beans','avocado','corn','tomato','lime','cumin','chili powder'],
+    fullIng:['2 chicken breasts','1 cup cooked brown rice','1 can black beans','1 avocado','1 cup corn','2 tomatoes diced','2 limes','1 tsp cumin','1 tsp chili powder'],
+    steps:['Season chicken with cumin, chili powder, salt. Grill or pan-sear 6 min/side.','Rest and slice.','Assemble bowls: rice, beans, corn, tomato, sliced chicken, avocado.','Squeeze lime over everything.'],
+    health:'High fiber, high potassium, lean protein. Classic DASH template.' },
+  { id:'mex3', name:'Shrimp Ceviche', cuisine:'Mexican', time:20,
+    ing:['shrimp','lime juice','tomato','cucumber','red onion','cilantro','jalapeño','avocado'],
+    fullIng:['400g cooked shrimp','½ cup lime juice','2 tomatoes diced','1 cucumber diced','¼ red onion finely diced','½ cup cilantro','1 jalapeño minced','1 avocado'],
+    steps:['Combine shrimp with lime juice, let sit 10 min.','Add tomato, cucumber, red onion, jalapeño, cilantro.','Fold in avocado last.','Serve with baked tortilla chips or lettuce cups.'],
+    health:'Low-calorie, high-protein, omega-3 rich shrimp. No cooking = preserved nutrients.' },
+  { id:'mex4', name:'Lentil & Sweet Potato Enchiladas', cuisine:'Mexican', time:40,
+    ing:['lentils','sweet potato','corn tortillas','enchilada sauce','cumin','garlic','onion','cheese'],
+    fullIng:['1 cup green lentils cooked','1 large sweet potato roasted','8 corn tortillas','2 cups enchilada sauce','1 tsp cumin','3 cloves garlic','1 onion','½ cup shredded cheese'],
+    steps:['Roast sweet potato cubes at 400°F 25 min.','Sauté onion and garlic. Mix with lentils, sweet potato, cumin.','Fill tortillas, roll, place seam-down in baking dish.','Pour enchilada sauce over, top with cheese.','Bake 20 min at 375°F.'],
+    health:'Sweet potato + lentils = high potassium, iron, plant protein. DASH-aligned.' },
+  { id:'mex5', name:'Mexican Street Corn Salad', cuisine:'Mexican', time:15,
+    ing:['corn','lime','chili powder','garlic','cilantro','red onion','cotija cheese','olive oil'],
+    fullIng:['4 ears corn (or 3 cups frozen)','2 limes','1 tsp chili powder','2 cloves garlic','½ cup cilantro','¼ red onion diced','¼ cup cotija or feta','1 tbsp olive oil'],
+    steps:['Char corn in a hot dry pan or grill 8–10 min.','Mix lime juice, olive oil, garlic, chili powder for dressing.','Toss corn with dressing, onion, cilantro.','Top with crumbled cotija.'],
+    health:'Corn is a good source of fiber and antioxidant zeaxanthin. Light, refreshing side.' },
+
+  // ── INDIAN ─────────────────────────────────────────────────
+  { id:'ind1', name:'Red Lentil Dal', cuisine:'Indian', time:30,
+    ing:['red lentils','tomatoes','onion','garlic','ginger','turmeric','cumin','coconut milk'],
+    fullIng:['1 cup red lentils rinsed','2 tomatoes diced','1 onion','3 cloves garlic','1 inch ginger','1 tsp turmeric','1 tsp cumin','½ can coconut milk'],
+    steps:['Sauté onion until golden. Add garlic and ginger 1 min.','Add tomatoes, cumin, turmeric — cook 5 min.','Add lentils and 2 cups water. Simmer 20 min until soft.','Stir in coconut milk. Adjust seasoning.','Serve with brown rice or flatbread.'],
+    health:'Turmeric (curcumin) is anti-inflammatory. Lentils = high potassium, magnesium, plant protein.' },
+  { id:'ind2', name:'Chana Masala', cuisine:'Indian', time:30,
+    ing:['chickpeas','tomatoes','onion','garlic','ginger','garam masala','cumin','coriander','turmeric'],
+    fullIng:['2 cans chickpeas','2 cans diced tomatoes','1 onion','4 cloves garlic','1 inch ginger','1 tsp garam masala','1 tsp cumin','1 tsp coriander','½ tsp turmeric'],
+    steps:['Sauté onion 8 min until deep golden.','Add garlic, ginger, and all spices — cook 2 min.','Add tomatoes, cook down 10 min.','Add chickpeas, simmer 15 min.','Finish with lemon juice and cilantro.'],
+    health:'Chickpeas = top DASH legume. High fiber slows glucose absorption and supports satiety.' },
+  { id:'ind3', name:'Saag Paneer', cuisine:'Indian', time:25,
+    ing:['spinach','paneer','garlic','ginger','onion','cumin','garam masala','cream'],
+    fullIng:['500g spinach','200g paneer cubed','3 cloves garlic','1 inch ginger','1 onion','1 tsp cumin','1 tsp garam masala','3 tbsp cream or yogurt'],
+    steps:['Blanch spinach 2 min, blend to smooth paste.','Pan-fry paneer cubes until golden, set aside.','Sauté onion, garlic, ginger. Add spices 1 min.','Add spinach purée, simmer 5 min.','Add paneer and cream, heat through.'],
+    health:'Spinach is exceptionally high in potassium and nitrates — both support vascular health.' },
+  { id:'ind4', name:'Tandoori Chicken', cuisine:'Indian', time:30,
+    ing:['chicken thighs','yogurt','garlic','ginger','turmeric','cumin','paprika','lemon','coriander'],
+    fullIng:['6 chicken thighs','1 cup plain yogurt','4 cloves garlic','1 inch ginger','1 tsp turmeric','1 tsp cumin','2 tsp paprika','1 lemon','1 tsp ground coriander'],
+    steps:['Score chicken. Mix yogurt and all spices for marinade.','Coat chicken thoroughly, marinate 2+ hours (overnight ideal).','Broil on high 12–15 min, turning once.','Serve with lemon wedges and cucumber raita.'],
+    health:'Ginger + turmeric + garlic = potent anti-inflammatory triad. Yogurt adds probiotics.' },
+  { id:'ind5', name:'Aloo Gobi', cuisine:'Indian', time:30,
+    ing:['cauliflower','potato','tomato','onion','garlic','turmeric','cumin','coriander','ginger'],
+    fullIng:['1 head cauliflower','2 potatoes cubed','1 tomato','1 onion','3 garlic cloves','½ tsp turmeric','1 tsp cumin','1 tsp coriander','1 inch ginger'],
+    steps:['Sauté onion until golden. Add garlic, ginger, spices.','Add tomato, cook 5 min.','Add potato, stir to coat, cook 5 min.','Add cauliflower and ¼ cup water. Cover, cook 15 min.','Uncover last 5 min to dry out slightly.'],
+    health:'Cruciferous cauliflower + potassium-rich potato. High in vitamin C and anti-inflammatory compounds.' },
+
+  // ── THAI ───────────────────────────────────────────────────
+  { id:'tha1', name:'Thai Basil Chicken', cuisine:'Thai', time:20,
+    ing:['ground chicken','thai basil','garlic','chili','soy sauce','fish sauce','oyster sauce','egg','brown rice'],
+    fullIng:['400g ground chicken','1 cup Thai basil leaves','4 cloves garlic','2 chilies','1 tbsp soy sauce','1 tbsp fish sauce','1 tbsp oyster sauce','1 egg fried','cooked brown rice'],
+    steps:['Stir-fry garlic and chili in very hot oil 30 sec.','Add chicken, break up and cook through.','Add soy, fish sauce, oyster sauce — toss.','Kill heat, fold in basil.','Serve over rice with fried egg on top.'],
+    health:'Thai basil contains eugenol — anti-inflammatory. High protein, quick cooking preserves nutrients.' },
+  { id:'tha2', name:'Tom Kha Soup', cuisine:'Thai', time:25,
+    ing:['coconut milk','chicken','lemongrass','galangal','kaffir lime leaves','mushrooms','fish sauce','lime','chili'],
+    fullIng:['1 can coconut milk','300g chicken sliced','2 stalks lemongrass bruised','5 slices galangal','4 kaffir lime leaves','1 cup mushrooms','2 tbsp fish sauce','2 limes','2 chilies'],
+    steps:['Simmer coconut milk with lemongrass, galangal, lime leaves 5 min.','Add chicken, cook through 8 min.','Add mushrooms, fish sauce, lime juice, chili.','Adjust seasoning — should be sour, savory, slightly spicy.','Remove aromatics before serving.'],
+    health:'Lemongrass has mild antihypertensive properties. Galangal is anti-inflammatory. Light and nourishing.' },
+  { id:'tha3', name:'Green Papaya Salad', cuisine:'Thai', time:15,
+    ing:['green papaya','cherry tomatoes','lime','fish sauce','garlic','chili','peanuts','dried shrimp'],
+    fullIng:['1 green papaya shredded','handful cherry tomatoes halved','3 limes','2 tbsp fish sauce','2 cloves garlic','2 red chilies','¼ cup roasted peanuts','2 tbsp dried shrimp'],
+    steps:['Pound garlic, chilies, dried shrimp in mortar.','Add tomatoes, bruise lightly.','Add papaya, fish sauce, lime juice.','Toss well. Adjust sour/salty balance.','Top with crushed peanuts.'],
+    health:'Green papaya is rich in papain enzymes and vitamin C. Very low calorie, high in fiber.' },
+  { id:'tha4', name:'Pad See Ew with Tofu', cuisine:'Thai', time:20,
+    ing:['wide rice noodles','tofu','chinese broccoli','egg','soy sauce','oyster sauce','garlic'],
+    fullIng:['200g wide rice noodles soaked','300g firm tofu pressed and cubed','2 cups Chinese broccoli','2 eggs','2 tbsp soy sauce','2 tbsp oyster sauce','4 cloves garlic'],
+    steps:['Fry tofu in very hot oil until golden. Set aside.','Fry garlic until fragrant. Add noodles, do not stir — let char slightly.','Push to side, scramble eggs.','Add broccoli and tofu, add sauces.','Toss everything together quickly.'],
+    health:'Tofu provides complete plant protein. Chinese broccoli is exceptionally high in calcium and potassium.' },
+
+  // ── MIDDLE EASTERN ─────────────────────────────────────────
+  { id:'mid1', name:'Falafel Bowl', cuisine:'Middle Eastern', time:30,
+    ing:['chickpeas','garlic','parsley','cumin','coriander','lemon','tahini','cucumber','tomato','pita'],
+    fullIng:['2 cans chickpeas dried well','4 cloves garlic','1 cup parsley','1 tsp cumin','1 tsp coriander','1 lemon','2 tbsp tahini','1 cucumber','2 tomatoes','whole wheat pita'],
+    steps:['Blend chickpeas, garlic, parsley, spices until crumbly — do not over-blend.','Form into balls/patties. Chill 30 min.','Pan-fry in olive oil until golden, 3 min per side.','Make tahini sauce: tahini + lemon + water.','Serve over salad with pita.'],
+    health:'Chickpeas = DASH superfood. Parsley is extremely high in vitamin K and vitamin C.' },
+  { id:'mid2', name:'Chicken Shawarma Bowl', cuisine:'Middle Eastern', time:30,
+    ing:['chicken thighs','cumin','turmeric','paprika','garlic','lemon','yogurt','cucumber','tomato','pita'],
+    fullIng:['6 chicken thighs','1 tsp cumin','½ tsp turmeric','1 tsp paprika','3 garlic cloves','1 lemon','¼ cup plain yogurt','1 cucumber','2 tomatoes','whole wheat pita'],
+    steps:['Marinate chicken in spices, garlic, lemon, yogurt for 2+ hours.','Roast at 425°F or grill until cooked through and charred.','Rest, then slice thin.','Serve over rice or with pita, cucumber, tomato, and yogurt sauce.'],
+    health:'Anti-inflammatory spice blend. Lean thigh meat stays juicy without excess fat.' },
+  { id:'mid3', name:'Lentil & Lemon Soup', cuisine:'Middle Eastern', time:30,
+    ing:['red lentils','onion','garlic','cumin','turmeric','lemon','spinach','olive oil'],
+    fullIng:['1½ cups red lentils','1 onion','4 cloves garlic','2 tsp cumin','½ tsp turmeric','2 lemons','3 cups spinach','2 tbsp olive oil'],
+    steps:['Sauté onion until golden. Add garlic and spices 1 min.','Add lentils and 5 cups water.','Simmer 20 min until lentils dissolve.','Add spinach, wilt 2 min.','Finish with generous lemon juice. Adjust salt.'],
+    health:'Lemon juice activates iron absorption from lentils. High potassium, fiber, plant protein.' },
+  { id:'mid4', name:'Tabbouleh', cuisine:'Middle Eastern', time:15,
+    ing:['bulgur wheat','parsley','mint','tomato','cucumber','lemon','olive oil','scallions'],
+    fullIng:['½ cup fine bulgur wheat','2 cups parsley finely chopped','½ cup mint chopped','3 tomatoes diced','1 cucumber diced','3 lemons','3 tbsp olive oil','4 scallions'],
+    steps:['Soak bulgur in cold water 15 min. Drain and squeeze dry.','Mix with tomato, cucumber, parsley, mint, scallion.','Dress with lemon and olive oil.','Season well. Let rest 10 min before serving.'],
+    health:'Parsley is the most nutrient-dense herb — high in vitamin K, C, and flavonoids.' },
+
+  // ── AMERICAN ───────────────────────────────────────────────
+  { id:'ame1', name:'Turkey & Black Bean Chili', cuisine:'American', time:35,
+    ing:['ground turkey','black beans','kidney beans','tomatoes','onion','garlic','cumin','chili powder','bell pepper'],
+    fullIng:['400g ground turkey','1 can black beans','1 can kidney beans','2 cans diced tomatoes','1 onion','4 cloves garlic','2 tsp cumin','2 tsp chili powder','2 bell peppers'],
+    steps:['Brown turkey with onion and garlic.','Add spices, cook 1 min.','Add tomatoes, beans, peppers. Stir well.','Simmer 25 min. Adjust seasoning.','Serve with avocado and a squeeze of lime.'],
+    health:'High protein, high fiber, high potassium. One of the best DASH meals for satiety.' },
+  { id:'ame2', name:'Grilled Salmon & Sweet Potato', cuisine:'American', time:25,
+    ing:['salmon','sweet potato','olive oil','garlic','lemon','asparagus','smoked paprika'],
+    fullIng:['6 oz salmon','1 large sweet potato','2 tbsp olive oil','2 cloves garlic','1 lemon','1 bunch asparagus','1 tsp smoked paprika'],
+    steps:['Roast sweet potato wedges at 425°F 20 min.','Toss asparagus with olive oil and garlic.','Grill or pan-sear salmon 4 min per side.','Add asparagus to pan last 5 min.','Serve with lemon.'],
+    health:'Sweet potato + salmon = two of the best BP foods. High K, omega-3, and CoQ10 companion.' },
+  { id:'ame3', name:'Quinoa Power Bowl', cuisine:'American', time:20,
+    ing:['quinoa','chickpeas','roasted vegetables','avocado','lemon','tahini','garlic','kale'],
+    fullIng:['1 cup quinoa','1 can chickpeas roasted','2 cups mixed roasted veg','1 avocado','1 lemon','2 tbsp tahini','1 clove garlic','2 cups kale massaged'],
+    steps:['Cook quinoa. Roast chickpeas with olive oil and paprika at 400°F 20 min.','Make tahini dressing: tahini + lemon + garlic + water to thin.','Massage kale with olive oil and salt.','Assemble: kale base, quinoa, chickpeas, veg, avocado.','Drizzle tahini dressing.'],
+    health:'Complete amino acid profile from quinoa. Highest fiber density of the grain options.' },
+  { id:'ame4', name:'Avocado Toast with Poached Egg', cuisine:'American', time:10,
+    ing:['whole grain bread','avocado','eggs','lemon','red pepper flakes','salt','olive oil'],
+    fullIng:['2 slices whole grain bread','1 ripe avocado','2 eggs','½ lemon','pinch red pepper flakes','sea salt','drizzle olive oil'],
+    steps:['Poach eggs in simmering water 3–4 min.','Toast bread until crisp.','Mash avocado with lemon, salt.','Spread on toast, top with eggs.','Finish with red pepper flakes and olive oil.'],
+    health:'Monounsaturated fats in avocado support endothelial health. Whole grain fiber slows BP-spiking glucose swings.' },
+  { id:'ame5', name:'Baked Sweet Potato & Black Beans', cuisine:'American', time:50,
+    ing:['sweet potato','black beans','avocado','salsa','cumin','garlic','lime','scallions'],
+    fullIng:['2 large sweet potatoes','1 can black beans','1 avocado','½ cup salsa','1 tsp cumin','2 cloves garlic','1 lime','2 scallions'],
+    steps:['Bake sweet potatoes at 400°F 45 min.','Heat black beans with garlic and cumin.','Split potatoes, fluff flesh.','Top with beans, avocado slices, salsa.','Squeeze lime, top with scallions.'],
+    health:'Potassium density of sweet potato + beans rivals most supplements. Excellent BP meal.' },
+  { id:'ame6', name:'Salmon & Lentil Bowl', cuisine:'American', time:25,
+    ing:['salmon','green lentils','spinach','lemon','olive oil','garlic','dijon mustard'],
+    fullIng:['6 oz salmon','1 cup cooked green lentils','2 cups spinach','1 lemon','2 tbsp olive oil','2 cloves garlic','1 tsp Dijon mustard'],
+    steps:['Make vinaigrette: olive oil, lemon, garlic, Dijon.','Sear salmon in olive oil 5 min per side.','Wilt spinach in same pan.','Dress lentils with vinaigrette.','Plate lentils, spinach, flaked salmon.'],
+    health:'Two of the highest BP-priority foods combined. Maximum omega-3 and potassium per meal.' },
+  { id:'ame7', name:'Turkey Lettuce Wraps', cuisine:'American', time:20,
+    ing:['ground turkey','lettuce','garlic','ginger','hoisin sauce','soy sauce','water chestnuts','scallions','sesame oil'],
+    fullIng:['400g ground turkey','8 butter lettuce leaves','3 cloves garlic','1 inch ginger','2 tbsp hoisin sauce','1 tbsp soy sauce','1 can water chestnuts','3 scallions','1 tsp sesame oil'],
+    steps:['Sauté garlic and ginger in sesame oil.','Add turkey, cook through.','Add hoisin, soy, water chestnuts.','Cook 3 more min.','Serve in lettuce cups topped with scallions.'],
+    health:'Very lean, low-carb, high-protein. Satisfying without the blood sugar spike.' },
+  { id:'ame8', name:'Overnight Oats with Berries', cuisine:'American', time:5,
+    ing:['rolled oats','almond milk','chia seeds','banana','berries','honey','cinnamon'],
+    fullIng:['½ cup rolled oats','1 cup unsweetened almond milk','1 tbsp chia seeds','½ banana sliced','1 cup mixed berries','1 tsp honey','½ tsp cinnamon'],
+    steps:['Combine oats, milk, chia seeds, honey, cinnamon in a jar.','Stir well. Refrigerate overnight.','Top with banana and berries in the morning.'],
+    health:'Oat beta-glucan lowers LDL cholesterol. Berries are highest antioxidant fruits — DASH priority food.' },
+];
+
+function showFoodTab(tab) {
+  foodTab = tab;
+  ['recipes','plan','goals','prep'].forEach(t => {
+    const panel = document.getElementById(`food-tab-${t}`);
+    const btn = document.getElementById(`food-tab-btn-${t}`);
+    if (panel) panel.style.display = t === tab ? 'block' : 'none';
+    if (btn) btn.className = t === tab ? 'btn btn-primary' : 'btn btn-secondary';
+  });
+  if (tab === 'plan') renderWeeklyPlan();
+  if (tab === 'goals') renderDietGoals();
+  if (tab === 'prep') { const el = document.getElementById('prep-notes-input'); if (el) el.value = state.prepNotes || ''; }
+  if (tab === 'recipes') renderRecipes();
+}
 
 function renderFood() {
-  renderDietGoals();
-  renderWeeklyPlan();
-  const prepEl = document.getElementById('prep-notes-input');
-  if (prepEl) prepEl.value = state.prepNotes || '';
+  renderCuisineTabs();
+  showFoodTab(foodTab);
+}
+
+function renderCuisineTabs() {
+  const el = document.getElementById('cuisine-tabs');
+  if (!el) return;
+  el.innerHTML = CUISINES.map(c => `
+    <button onclick="filterRecipeCuisine('${c}')" id="cuisine-btn-${c.replace(/\s/g,'_')}"
+      class="${c === recipeCuisine ? 'btn btn-primary' : 'btn btn-secondary'}"
+      style="white-space:nowrap;font-size:12px;">${c}</button>
+  `).join('');
+}
+
+function filterRecipeCuisine(cuisine) {
+  recipeCuisine = cuisine;
+  renderCuisineTabs();
+  renderRecipes();
+}
+
+function normalizeIng(s) { return s.trim().toLowerCase(); }
+
+function addIngredientTag() {
+  const input = document.getElementById('ingredient-input');
+  const val = normalizeIng(input.value);
+  if (!val || userIngredients.includes(val)) { input.value = ''; return; }
+  userIngredients.push(val);
+  input.value = '';
+  renderIngredientTags();
+  renderRecipes();
+}
+
+function removeIngredientTag(i) {
+  userIngredients.splice(i, 1);
+  renderIngredientTags();
+  renderRecipes();
+}
+
+function handleIngredientKey(e) {
+  if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addIngredientTag(); }
+}
+
+function renderIngredientTags() {
+  const el = document.getElementById('ingredient-tags');
+  if (!el) return;
+  el.innerHTML = userIngredients.map((ing, i) => `
+    <span style="display:inline-flex;align-items:center;gap:5px;background:var(--surface2);border:0.5px solid var(--border2);border-radius:20px;padding:4px 10px;font-size:12px;color:var(--text2);">
+      ${ing}
+      <button onclick="removeIngredientTag(${i})" style="background:none;border:none;color:var(--text3);font-size:14px;cursor:pointer;padding:0;line-height:1;">×</button>
+    </span>
+  `).join('');
+}
+
+function scoreRecipe(recipe) {
+  if (!userIngredients.length) return { score: 1, matched: recipe.ing.length, missing: 0 };
+  let matched = 0;
+  for (const ri of recipe.ing) {
+    if (userIngredients.some(ui => ri.includes(ui) || ui.includes(ri.split(' ')[0]))) matched++;
+  }
+  return { score: matched / recipe.ing.length, matched, missing: recipe.ing.length - matched };
+}
+
+function getFilteredRecipes() {
+  let list = recipeCuisine === 'All' ? RECIPES : RECIPES.filter(r => r.cuisine === recipeCuisine);
+  if (userIngredients.length) {
+    list = list.map(r => ({ ...r, _score: scoreRecipe(r) })).sort((a, b) => b._score.score - a._score.score);
+  }
+  return list;
+}
+
+function renderRecipes() {
+  const el = document.getElementById('recipe-list');
+  if (!el) return;
+  const list = getFilteredRecipes();
+  if (!list.length) { el.innerHTML = '<div style="padding:24px;text-align:center;font-size:13px;color:var(--text3);">No recipes for this cuisine yet.</div>'; return; }
+  el.innerHTML = list.map(r => {
+    const s = userIngredients.length ? scoreRecipe(r) : null;
+    const scoreColor = !s ? '' : s.score >= 0.75 ? 'var(--green)' : s.score >= 0.4 ? 'var(--gold)' : 'var(--text3)';
+    const scoreBadge = s ? `<span style="font-family:'DM Mono',monospace;font-size:11px;color:${scoreColor};background:var(--surface2);border:0.5px solid var(--border2);border-radius:4px;padding:2px 6px;">${s.matched}/${r.ing.length} match</span>` : '';
+    const missingBadge = s && s.missing > 0 ? `<div style="font-size:11px;color:var(--text3);margin-top:3px;">Missing ~${s.missing} ingredient${s.missing > 1 ? 's' : ''}</div>` : '';
+    return `
+      <div onclick="openRecipeModal('${r.id}')" style="padding:14px 16px;border-bottom:0.5px solid var(--border);cursor:pointer;active:background:var(--surface2);">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:3px;">
+          <div style="font-size:15px;font-weight:500;">${r.name}</div>
+          ${scoreBadge}
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;">${r.cuisine}</span>
+          <span style="font-size:11px;color:var(--text3);">·</span>
+          <span style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;">${r.time} min</span>
+        </div>
+        ${missingBadge}
+      </div>
+    `;
+  }).join('') + '<div style="height:1px;"></div>';
+  if (el.lastElementChild && el.children.length > 1) {
+    const items = el.querySelectorAll('[onclick]');
+    if (items.length) items[items.length - 1].style.borderBottom = 'none';
+  }
+}
+
+function openRecipeModal(id) {
+  const r = RECIPES.find(r => r.id === id);
+  if (!r) return;
+  document.getElementById('recipe-modal-name').textContent = r.name;
+  document.getElementById('recipe-modal-cuisine').textContent = r.cuisine;
+  document.getElementById('recipe-modal-meta').textContent = `${r.time} min`;
+  document.getElementById('recipe-modal-ingredients').innerHTML = r.fullIng.map(i =>
+    `<div style="display:flex;gap:8px;padding:5px 0;border-bottom:0.5px solid var(--border);font-size:13px;color:var(--text2);">
+      <span style="color:var(--gold);">·</span>${i}
+    </div>`
+  ).join('');
+  document.getElementById('recipe-modal-steps').innerHTML = r.steps.map((s, i) =>
+    `<div style="display:flex;gap:10px;padding:6px 0;border-bottom:0.5px solid var(--border);">
+      <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text3);min-width:18px;padding-top:1px;">${i+1}</span>
+      <span style="font-size:13px;color:var(--text);line-height:1.5;">${s}</span>
+    </div>`
+  ).join('');
+  const healthEl = document.getElementById('recipe-modal-health');
+  if (r.health) { healthEl.textContent = r.health; healthEl.style.display = 'block'; }
+  else healthEl.style.display = 'none';
+  openModal('modal-recipe');
 }
 
 function renderDietGoals() {
